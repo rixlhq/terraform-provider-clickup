@@ -496,6 +496,28 @@ func extractListItemID(v any) any {
 	return nil
 }
 
+// userObjectsToIntList converts a list of user/group objects (each with an
+// "id" field) into a list of numeric IDs. Non-object values are passed through
+// so that already-numeric lists remain intact.
+func userObjectsToIntList(v any) any {
+	list, ok := v.([]any)
+	if !ok {
+		return v
+	}
+
+	out := make([]any, 0, len(list))
+	for _, elem := range list {
+		if id := extractListItemID(elem); id != nil {
+			out = append(out, id)
+			continue
+		}
+		if elem != nil {
+			out = append(out, elem)
+		}
+	}
+	return out
+}
+
 // stringToInt parses a numeric string for use in a create request body where
 // the create endpoint expects an integer but the update endpoint accepts a
 // string (e.g., list assignee). Empty values and the sentinel "none" are

@@ -57,6 +57,10 @@ func newGoalResource() resource.Resource {
 		updateMethod:     "put",
 		createBodyFields: []string{"name", "due_date", "description", "multiple_owners", "owners", "color"},
 		updateBodyFields: []string{"name", "due_date", "description", "rem_owners", "add_owners", "color"},
+		readTransforms: map[string]func(any) any{
+			"owners": userObjectsToIntList,
+		},
+		readResponseRoot: "goal",
 		schemaFunc:       resource_goal.GoalResourceSchema,
 	}
 }
