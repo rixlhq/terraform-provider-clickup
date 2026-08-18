@@ -5,15 +5,31 @@ package provider
 import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 
+	resource_goal "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/resource_goal"
 	resource_list "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/resource_list"
 	resource_space "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/resource_space"
 	resource_task "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/resource_task"
 )
 
 var resourceFactories = []func() resource.Resource{
+	newGoalResource,
 	newListResource,
 	newSpaceResource,
 	newTaskResource,
+}
+
+func newGoalResource() resource.Resource {
+	return &genericResource{
+		name:             "goal",
+		createPath:       "/v2/team/{team_id}/goal",
+		readPath:         "/v2/goal/{goal_id}",
+		updatePath:       "/v2/goal/{goal_id}",
+		deletePath:       "/v2/goal/{goal_id}",
+		updateMethod:     "put",
+		createBodyFields: []string{"name", "due_date", "description", "multiple_owners", "owners", "color"},
+		updateBodyFields: []string{"name", "due_date", "description", "rem_owners", "add_owners", "color"},
+		schemaFunc:       resource_goal.GoalResourceSchema,
+	}
 }
 
 func newListResource() resource.Resource {
