@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"maps"
 	"net/url"
 	"strconv"
 	"strings"
@@ -290,13 +289,13 @@ func (r *genericResource) withPathParam(ctx context.Context, v tftypes.Value, pa
 		return tftypes.Value{}, diags
 	}
 
-	objType, ok := v.Type().(tftypes.Object)
+	fullType, ok := r.tfType(ctx).(tftypes.Object)
 	if !ok {
 		diags.AddError("Invalid Value", "expected object type")
 		return tftypes.Value{}, diags
 	}
 
-	attrType, ok := objType.AttributeTypes[param]
+	attrType, ok := fullType.AttributeTypes[param]
 	if !ok {
 		diags.AddError("Invalid Resource Schema", fmt.Sprintf("path parameter %q is not an attribute", param))
 		return tftypes.Value{}, diags
@@ -308,11 +307,17 @@ func (r *genericResource) withPathParam(ctx context.Context, v tftypes.Value, pa
 		return tftypes.Value{}, diags
 	}
 
-	vals := make(map[string]tftypes.Value, len(obj))
-	maps.Copy(vals, obj)
+	vals := make(map[string]tftypes.Value, len(fullType.AttributeTypes))
+	for k, at := range fullType.AttributeTypes {
+		if ov, ok := obj[k]; ok {
+			vals[k] = ov
+		} else {
+			vals[k] = tftypes.NewValue(at, tftypes.UnknownValue)
+		}
+	}
 	vals[param] = newVal
 
-	return tftypes.NewValue(objType, vals), diags
+	return tftypes.NewValue(fullType, vals), diags
 }
 
 func (r *genericResource) extractID(raw []byte) (string, error) {

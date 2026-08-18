@@ -67,9 +67,16 @@ func (r *genericResource) Metadata(_ context.Context, req resource.MetadataReque
 	resp.TypeName = req.ProviderTypeName + "_" + r.name
 }
 
-func (r *genericResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *genericResource) loadSchema(ctx context.Context) {
+	if r.schema.Attributes != nil {
+		return
+	}
 	r.schema = r.schemaFunc(ctx)
 	r.schema = r.addMissingPathParamAttributes()
+}
+
+func (r *genericResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	r.loadSchema(ctx)
 	resp.Schema = r.schema
 }
 func (r *genericResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -85,6 +92,7 @@ func (r *genericResource) Configure(_ context.Context, req resource.ConfigureReq
 }
 
 func (r *genericResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	r.loadSchema(ctx)
 	if r.client == nil {
 		resp.Diagnostics.AddError("Missing ClickUp Client", "Configure the provider with api_token or CLICKUP_API_TOKEN to use this resource.")
 		return
@@ -125,6 +133,7 @@ func (r *genericResource) Create(ctx context.Context, req resource.CreateRequest
 }
 
 func (r *genericResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	r.loadSchema(ctx)
 	if r.client == nil {
 		resp.Diagnostics.AddError("Missing ClickUp Client", "Configure the provider with api_token or CLICKUP_API_TOKEN to use this resource.")
 		return
@@ -154,6 +163,7 @@ func (r *genericResource) Read(ctx context.Context, req resource.ReadRequest, re
 }
 
 func (r *genericResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	r.loadSchema(ctx)
 	if r.client == nil {
 		resp.Diagnostics.AddError("Missing ClickUp Client", "Configure the provider with api_token or CLICKUP_API_TOKEN to use this resource.")
 		return
@@ -219,6 +229,7 @@ func (r *genericResource) Update(ctx context.Context, req resource.UpdateRequest
 }
 
 func (r *genericResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	r.loadSchema(ctx)
 	if r.client == nil {
 		resp.Diagnostics.AddError("Missing ClickUp Client", "Configure the provider with api_token or CLICKUP_API_TOKEN to use this resource.")
 		return
