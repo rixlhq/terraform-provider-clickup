@@ -39,7 +39,7 @@ func (p *ClickUpProvider) Metadata(ctx context.Context, req provider.MetadataReq
 
 func (p *ClickUpProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Terraform provider for managing ClickUp resources via the public API v3.",
+		MarkdownDescription: "Terraform provider for managing ClickUp resources via the public API.",
 		Attributes: map[string]schema.Attribute{
 			"api_token": schema.StringAttribute{
 				MarkdownDescription: "ClickUp API token. Can be set via the `CLICKUP_API_TOKEN` environment variable.",
@@ -47,7 +47,7 @@ func (p *ClickUpProvider) Schema(ctx context.Context, req provider.SchemaRequest
 				Sensitive:           true,
 			},
 			"base_url": schema.StringAttribute{
-				MarkdownDescription: "Override the ClickUp API base URL. Can be set via the `CLICKUP_BASE_URL` environment variable. Defaults to `https://api.clickup.com`.",
+				MarkdownDescription: "Override the ClickUp API base URL. Can be set via the `CLICKUP_BASE_URL` environment variable. Defaults to `https://api.clickup.com/api`.",
 				Optional:            true,
 			},
 		},
@@ -94,14 +94,16 @@ func (p *ClickUpProvider) Resources(ctx context.Context) []func() resource.Resou
 	return append(resourceFactories,
 		newFolderResource,
 		newListCommentResource,
+		newSpaceTagResource,
 		newTaskCommentResource,
+		newUserGroupResource,
 		newViewCommentResource,
 		newWebhookResource,
 	)
 }
 
 func (p *ClickUpProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
-	return dataSourceFactories
+	return append(dataSourceFactories, manualDataSourceFactories...)
 }
 
 // New returns a factory for the ClickUp provider.

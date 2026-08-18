@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net/url"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
@@ -28,8 +29,23 @@ func (r *folderResource) buildUpdateBody(data folderResourceModel) ([]byte, erro
 	return json.Marshal(body)
 }
 
+// folderParentID returns the parent folder ID from the ClickUp response.
+// The API uses "parent_folder" in read responses and "parent_folder_id" in
+// create/update request bodies, so both keys are checked.
+func folderParentID(folder map[string]any) string {
+	for _, key := range []string{"parent_folder_id", "parent_folder"} {
+		switch v := folder[key].(type) {
+		case string:
+			return v
+		case json.Number:
+			return v.String()
+		}
+	}
+	return ""
+}
+
 func (r *folderResource) refresh(ctx context.Context, data *folderResourceModel) error {
-	path := "/v2/folder/" + data.FolderId.ValueString()
+	path := "/v2/folder/" + url.PathEscape(data.FolderId.ValueString())
 	raw, err := r.client.Get(ctx, path, nil)
 	if err != nil {
 		if clickupclient.IsNotFound(err) {
@@ -61,7 +77,7 @@ func (r *folderResource) mapResponse(raw []byte, data *folderResourceModel) erro
 	data.Orderindex = int64OrNull(folder["orderindex"])
 	data.TaskCount = int64OrNull(folder["task_count"])
 
-	if p, ok := folder["parent_folder_id"].(string); ok && p != "" {
+	if p := folderParentID(folder); p != "" {
 		data.ParentFolderId = types.StringValue(p)
 	}
 

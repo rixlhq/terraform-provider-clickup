@@ -110,16 +110,17 @@ func (d *genericDataSource) buildPathAndQuery(v tftypes.Value) (string, url.Valu
 	path := d.path
 	for _, match := range pathParamRegex.FindAllStringSubmatch(d.path, -1) {
 		param := match[1]
-		pathParams[param] = true
-		val, ok := obj[param]
+		normParam := clickupcommon.TerraformIdentifier(param)
+		pathParams[normParam] = true
+		val, ok := obj[normParam]
 		if !ok {
-			return "", nil, fmt.Errorf("missing path parameter %q", param)
+			return "", nil, fmt.Errorf("missing path parameter %q", normParam)
 		}
 		str, err := valueAsString(val)
 		if err != nil {
-			return "", nil, fmt.Errorf("path parameter %q: %w", param, err)
+			return "", nil, fmt.Errorf("path parameter %q: %w", normParam, err)
 		}
-		path = strings.Replace(path, match[0], str, 1)
+		path = strings.Replace(path, match[0], url.PathEscape(str), 1)
 	}
 
 	query := url.Values{}
@@ -135,11 +136,9 @@ func (d *genericDataSource) buildPathAndQuery(v tftypes.Value) (string, url.Valu
 		if val.IsNull() || !val.IsKnown() {
 			continue
 		}
-		str, err := valueAsString(val)
-		if err != nil {
+		if err := appendQueryValue(query, k, val, true); err != nil {
 			return "", nil, fmt.Errorf("query parameter %q: %w", k, err)
 		}
-		query.Set(k, str)
 	}
 
 	return path, query, nil
@@ -160,6 +159,63 @@ func asObject(v tftypes.Value) (map[string]tftypes.Value, error) {
 	return m, nil
 }
 
+func valueAsStrings(v tftypes.Value) ([]string, error) {
+	switch v.Type().(type) {
+	case tftypes.List, tftypes.Set, tftypes.Tuple:
+		var elems []tftypes.Value
+		if err := v.As(&elems); err != nil {
+			return nil, err
+		}
+		out := make([]string, 0, len(elems))
+		for _, e := range elems {
+			if e.IsNull() || !e.IsKnown() {
+				continue
+			}
+			s, err := valueAsString(e)
+			if err != nil {
+				return nil, err
+			}
+			out = append(out, s)
+		}
+		return out, nil
+	}
+	return nil, fmt.Errorf("cannot use %s as a collection of parameter values", v.Type())
+}
+
+// appendQueryValue encodes a Terraform value as a query parameter. Collection
+// values are added once per element. When bracketed is true the query key uses
+// the "name[]" style that ClickUp uses for array query parameters.
+func appendQueryValue(query url.Values, key string, v tftypes.Value, bracketed bool) error {
+	if v.IsNull() || !v.IsKnown() {
+		return nil
+	}
+	t := v.Type()
+	if t.Is(tftypes.String) || t.Is(tftypes.Number) || t.Is(tftypes.Bool) {
+		s, err := valueAsString(v)
+		if err != nil {
+			return err
+		}
+		query.Set(key, s)
+		return nil
+	}
+	switch t.(type) {
+	case tftypes.List, tftypes.Set, tftypes.Tuple:
+		vals, err := valueAsStrings(v)
+		if err != nil {
+			return err
+		}
+		k := key
+		if bracketed {
+			k = key + "[]"
+		}
+		for _, s := range vals {
+			query.Add(k, s)
+		}
+		return nil
+	}
+	return fmt.Errorf("cannot use %s as a query parameter value", t)
+}
+
 func valueAsString(v tftypes.Value) (string, error) {
 	if v.IsNull() || !v.IsKnown() {
 		return "", errors.New("value is null or unknown")
@@ -177,7 +233,7 @@ func valueAsString(v tftypes.Value) (string, error) {
 		if err := v.As(&n); err != nil {
 			return "", err
 		}
-		return n.Text('f', 0), nil
+		return n.Text('f', -1), nil
 	}
 	if t.Is(tftypes.Bool) {
 		var b bool

@@ -148,7 +148,7 @@ func newCustomRolesDataSource() datasource.DataSource {
 func newFilteredTeamTasksDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "filtered_team_tasks",
-		path:       "/v2/team/{team_Id}/task",
+		path:       "/v2/team/{team_id}/task",
 		schemaFunc: datasource_filtered_team_tasks.FilteredTeamTasksDataSourceSchema,
 	}
 }

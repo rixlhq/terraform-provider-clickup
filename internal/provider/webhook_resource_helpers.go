@@ -22,13 +22,13 @@ func (r *webhookResource) buildCreateBody(ctx context.Context, data webhookResou
 	}
 
 	if !data.SpaceId.IsNull() && !data.SpaceId.IsUnknown() {
-		body["space_id"] = data.SpaceId.ValueInt64()
+		body["space_id"] = parseIntString(data.SpaceId.ValueString())
 	}
 	if !data.FolderId.IsNull() && !data.FolderId.IsUnknown() {
-		body["folder_id"] = data.FolderId.ValueInt64()
+		body["folder_id"] = parseIntString(data.FolderId.ValueString())
 	}
 	if !data.ListId.IsNull() && !data.ListId.IsUnknown() {
-		body["list_id"] = data.ListId.ValueInt64()
+		body["list_id"] = parseIntString(data.ListId.ValueString())
 	}
 	if !data.TaskId.IsNull() && !data.TaskId.IsUnknown() {
 		body["task_id"] = data.TaskId.ValueString()
@@ -120,15 +120,15 @@ func (r *webhookResource) mapWebhookToModel(ctx context.Context, wh map[string]a
 	data.WebhookId = stringOrNull(wh["id"])
 	data.ClientId = stringOrNull(wh["client_id"])
 	data.Endpoint = stringOrNull(wh["endpoint"])
-	data.Health = stringOrNull(wh["health"])
+	data.Health = jsonOrNull(wh["health"])
 	data.Secret = stringOrNull(wh["secret"])
 	data.Status = stringOrNull(wh["status"])
 	data.TaskId = stringOrNull(wh["task_id"])
 	data.UserId = int64OrNull(wh["userid"])
 	data.TeamId = int64OrNull(wh["team_id"])
-	data.SpaceId = int64OrNull(wh["space_id"])
-	data.FolderId = int64OrNull(wh["folder_id"])
-	data.ListId = int64OrNull(wh["list_id"])
+	data.SpaceId = stringOrNull(wh["space_id"])
+	data.FolderId = stringOrNull(wh["folder_id"])
+	data.ListId = stringOrNull(wh["list_id"])
 
 	if events, ok := wh["events"].([]any); ok {
 		data.Events = listValueFromStrings(ctx, events)
@@ -208,4 +208,39 @@ func listValueFromStrings(ctx context.Context, raw []any) types.List {
 	}
 	lv, _ := types.ListValueFrom(ctx, types.StringType, values)
 	return lv
+}
+
+// parseIntString parses a string that contains an integer ID.
+// It returns the original string if it cannot be parsed, allowing the API to
+// decide what to do with it.
+func parseIntString(s string) any {
+	if s == "" {
+		return nil
+	}
+	i, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return s
+	}
+	return i
+}
+
+// jsonOrNull returns the JSON encoding of v if it is a map or slice, otherwise
+// falls back to the string representation of v. It is used for the webhook
+// health object, which the API returns as an object but the schema exposes as
+// a JSON-encoded string.
+func jsonOrNull(v any) types.String {
+	switch x := v.(type) {
+	case string:
+		return types.StringValue(x)
+	case json.Number:
+		return types.StringValue(x.String())
+	case nil:
+		return types.StringNull()
+	default:
+		b, err := json.Marshal(v)
+		if err == nil {
+			return types.StringValue(string(b))
+		}
+		return types.StringNull()
+	}
 }

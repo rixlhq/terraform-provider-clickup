@@ -22,10 +22,26 @@ func TaskResourceSchema(ctx context.Context) schema.Schema {
 				Optional: true,
 				Computed: true,
 			},
-			"assignees": schema.ListAttribute{
-				ElementType: types.Int64Type,
-				Optional:    true,
-				Computed:    true,
+			"assignees": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"add": schema.ListAttribute{
+						ElementType: types.Int64Type,
+						Optional:    true,
+						Computed:    true,
+					},
+					"rem": schema.ListAttribute{
+						ElementType: types.Int64Type,
+						Optional:    true,
+						Computed:    true,
+					},
+				},
+				CustomType: AssigneesType{
+					ObjectType: types.ObjectType{
+						AttrTypes: AssigneesValue{}.AttributeTypes(ctx),
+					},
+				},
+				Optional: true,
+				Computed: true,
 			},
 			"check_required_custom_fields": schema.BoolAttribute{
 				Optional:            true,
@@ -39,23 +55,10 @@ func TaskResourceSchema(ctx context.Context) schema.Schema {
 						"id": schema.StringAttribute{
 							Required: true,
 						},
-						"value": schema.BoolAttribute{
-							Required: true,
-						},
-						"value_options": schema.SingleNestedAttribute{
-							Attributes: map[string]schema.Attribute{
-								"time": schema.BoolAttribute{
-									Optional: true,
-									Computed: true,
-								},
-							},
-							CustomType: ValueOptionsType{
-								ObjectType: types.ObjectType{
-									AttrTypes: ValueOptionsValue{}.AttributeTypes(ctx),
-								},
-							},
-							Optional: true,
-							Computed: true,
+						"value": schema.StringAttribute{
+							Required:            true,
+							Description:         "JSON-encoded custom field value. Use jsonencode() for non-string values.",
+							MarkdownDescription: "JSON-encoded custom field value. Use jsonencode() for non-string values.",
 						},
 					},
 					CustomType: CustomFieldsType{
@@ -93,12 +96,26 @@ func TaskResourceSchema(ctx context.Context) schema.Schema {
 				Optional: true,
 				Computed: true,
 			},
-			"group_assignees": schema.ListAttribute{
-				ElementType:         types.StringType,
-				Optional:            true,
-				Computed:            true,
-				Description:         "Assign multiple user groups to the task.",
-				MarkdownDescription: "Assign multiple user groups to the task.",
+			"group_assignees": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"add": schema.ListAttribute{
+						ElementType: types.StringType,
+						Optional:    true,
+						Computed:    true,
+					},
+					"rem": schema.ListAttribute{
+						ElementType: types.StringType,
+						Optional:    true,
+						Computed:    true,
+					},
+				},
+				CustomType: GroupAssigneesType{
+					ObjectType: types.ObjectType{
+						AttrTypes: GroupAssigneesValue{}.AttributeTypes(ctx),
+					},
+				},
+				Optional: true,
+				Computed: true,
 			},
 			"include_markdown_description": schema.BoolAttribute{
 				Optional:            true,
@@ -180,37 +197,496 @@ func TaskResourceSchema(ctx context.Context) schema.Schema {
 				Optional: true,
 				Computed: true,
 			},
+			"watchers": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"add": schema.ListAttribute{
+						ElementType: types.Int64Type,
+						Optional:    true,
+						Computed:    true,
+					},
+					"rem": schema.ListAttribute{
+						ElementType: types.Int64Type,
+						Optional:    true,
+						Computed:    true,
+					},
+				},
+				CustomType: WatchersType{
+					ObjectType: types.ObjectType{
+						AttrTypes: WatchersValue{}.AttributeTypes(ctx),
+					},
+				},
+				Optional: true,
+				Computed: true,
+			},
 		},
 	}
 }
 
 type TaskModel struct {
-	Archived                   types.Bool   `tfsdk:"archived"`
-	Assignees                  types.List   `tfsdk:"assignees"`
-	CheckRequiredCustomFields  types.Bool   `tfsdk:"check_required_custom_fields"`
-	CustomFields               types.List   `tfsdk:"custom_fields"`
-	CustomItemId               types.Number `tfsdk:"custom_item_id"`
-	CustomTaskIds              types.Bool   `tfsdk:"custom_task_ids"`
-	Description                types.String `tfsdk:"description"`
-	DueDate                    types.Int64  `tfsdk:"due_date"`
-	DueDateTime                types.Bool   `tfsdk:"due_date_time"`
-	GroupAssignees             types.List   `tfsdk:"group_assignees"`
-	IncludeMarkdownDescription types.Bool   `tfsdk:"include_markdown_description"`
-	IncludeSubtasks            types.Bool   `tfsdk:"include_subtasks"`
-	LinksTo                    types.String `tfsdk:"links_to"`
-	MarkdownContent            types.String `tfsdk:"markdown_content"`
-	Name                       types.String `tfsdk:"name"`
-	NotifyAll                  types.Bool   `tfsdk:"notify_all"`
-	Parent                     types.String `tfsdk:"parent"`
-	Points                     types.Number `tfsdk:"points"`
-	Priority                   types.Int64  `tfsdk:"priority"`
-	StartDate                  types.Int64  `tfsdk:"start_date"`
-	StartDateTime              types.Bool   `tfsdk:"start_date_time"`
-	Status                     types.String `tfsdk:"status"`
-	Tags                       types.List   `tfsdk:"tags"`
-	TaskId                     types.String `tfsdk:"task_id"`
-	TeamId                     types.Number `tfsdk:"team_id"`
-	TimeEstimate               types.Int64  `tfsdk:"time_estimate"`
+	Archived                   types.Bool          `tfsdk:"archived"`
+	Assignees                  AssigneesValue      `tfsdk:"assignees"`
+	CheckRequiredCustomFields  types.Bool          `tfsdk:"check_required_custom_fields"`
+	CustomFields               types.List          `tfsdk:"custom_fields"`
+	CustomItemId               types.Number        `tfsdk:"custom_item_id"`
+	CustomTaskIds              types.Bool          `tfsdk:"custom_task_ids"`
+	Description                types.String        `tfsdk:"description"`
+	DueDate                    types.Int64         `tfsdk:"due_date"`
+	DueDateTime                types.Bool          `tfsdk:"due_date_time"`
+	GroupAssignees             GroupAssigneesValue `tfsdk:"group_assignees"`
+	IncludeMarkdownDescription types.Bool          `tfsdk:"include_markdown_description"`
+	IncludeSubtasks            types.Bool          `tfsdk:"include_subtasks"`
+	LinksTo                    types.String        `tfsdk:"links_to"`
+	MarkdownContent            types.String        `tfsdk:"markdown_content"`
+	Name                       types.String        `tfsdk:"name"`
+	NotifyAll                  types.Bool          `tfsdk:"notify_all"`
+	Parent                     types.String        `tfsdk:"parent"`
+	Points                     types.Number        `tfsdk:"points"`
+	Priority                   types.Int64         `tfsdk:"priority"`
+	StartDate                  types.Int64         `tfsdk:"start_date"`
+	StartDateTime              types.Bool          `tfsdk:"start_date_time"`
+	Status                     types.String        `tfsdk:"status"`
+	Tags                       types.List          `tfsdk:"tags"`
+	TaskId                     types.String        `tfsdk:"task_id"`
+	TeamId                     types.Number        `tfsdk:"team_id"`
+	TimeEstimate               types.Int64         `tfsdk:"time_estimate"`
+	Watchers                   WatchersValue       `tfsdk:"watchers"`
+}
+
+var _ basetypes.ObjectTypable = AssigneesType{}
+
+type AssigneesType struct {
+	basetypes.ObjectType
+}
+
+func (t AssigneesType) Equal(o attr.Type) bool {
+	other, ok := o.(AssigneesType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t AssigneesType) String() string {
+	return "AssigneesType"
+}
+
+func (t AssigneesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	addAttribute, ok := attributes["add"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`add is missing from object`)
+
+		return nil, diags
+	}
+
+	addVal, ok := addAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`add expected to be basetypes.ListValue, was: %T`, addAttribute))
+	}
+
+	remAttribute, ok := attributes["rem"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`rem is missing from object`)
+
+		return nil, diags
+	}
+
+	remVal, ok := remAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`rem expected to be basetypes.ListValue, was: %T`, remAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return AssigneesValue{
+		Add:   addVal,
+		Rem:   remVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewAssigneesValueNull() AssigneesValue {
+	return AssigneesValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewAssigneesValueUnknown() AssigneesValue {
+	return AssigneesValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewAssigneesValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (AssigneesValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing AssigneesValue Attribute Value",
+				"While creating a AssigneesValue value, a missing attribute value was detected. "+
+					"A AssigneesValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("AssigneesValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid AssigneesValue Attribute Type",
+				"While creating a AssigneesValue value, an invalid attribute value was detected. "+
+					"A AssigneesValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("AssigneesValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("AssigneesValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra AssigneesValue Attribute Value",
+				"While creating a AssigneesValue value, an extra attribute value was detected. "+
+					"A AssigneesValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra AssigneesValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewAssigneesValueUnknown(), diags
+	}
+
+	addAttribute, ok := attributes["add"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`add is missing from object`)
+
+		return NewAssigneesValueUnknown(), diags
+	}
+
+	addVal, ok := addAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`add expected to be basetypes.ListValue, was: %T`, addAttribute))
+	}
+
+	remAttribute, ok := attributes["rem"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`rem is missing from object`)
+
+		return NewAssigneesValueUnknown(), diags
+	}
+
+	remVal, ok := remAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`rem expected to be basetypes.ListValue, was: %T`, remAttribute))
+	}
+
+	if diags.HasError() {
+		return NewAssigneesValueUnknown(), diags
+	}
+
+	return AssigneesValue{
+		Add:   addVal,
+		Rem:   remVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewAssigneesValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) AssigneesValue {
+	object, diags := NewAssigneesValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewAssigneesValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t AssigneesType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewAssigneesValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewAssigneesValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewAssigneesValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewAssigneesValueMust(AssigneesValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t AssigneesType) ValueType(ctx context.Context) attr.Value {
+	return AssigneesValue{}
+}
+
+var _ basetypes.ObjectValuable = AssigneesValue{}
+
+type AssigneesValue struct {
+	Add   basetypes.ListValue `tfsdk:"add"`
+	Rem   basetypes.ListValue `tfsdk:"rem"`
+	state attr.ValueState
+}
+
+func (v AssigneesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["add"] = basetypes.ListType{
+		ElemType: types.Int64Type,
+	}.TerraformType(ctx)
+	attrTypes["rem"] = basetypes.ListType{
+		ElemType: types.Int64Type,
+	}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.Add.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["add"] = val
+
+		val, err = v.Rem.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["rem"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v AssigneesValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v AssigneesValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v AssigneesValue) String() string {
+	return "AssigneesValue"
+}
+
+func (v AssigneesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var addVal basetypes.ListValue
+	switch {
+	case v.Add.IsUnknown():
+		addVal = types.ListUnknown(types.Int64Type)
+	case v.Add.IsNull():
+		addVal = types.ListNull(types.Int64Type)
+	default:
+		var d diag.Diagnostics
+		addVal, d = types.ListValue(types.Int64Type, v.Add.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"add": basetypes.ListType{
+				ElemType: types.Int64Type,
+			},
+			"rem": basetypes.ListType{
+				ElemType: types.Int64Type,
+			},
+		}), diags
+	}
+
+	var remVal basetypes.ListValue
+	switch {
+	case v.Rem.IsUnknown():
+		remVal = types.ListUnknown(types.Int64Type)
+	case v.Rem.IsNull():
+		remVal = types.ListNull(types.Int64Type)
+	default:
+		var d diag.Diagnostics
+		remVal, d = types.ListValue(types.Int64Type, v.Rem.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"add": basetypes.ListType{
+				ElemType: types.Int64Type,
+			},
+			"rem": basetypes.ListType{
+				ElemType: types.Int64Type,
+			},
+		}), diags
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"add": basetypes.ListType{
+			ElemType: types.Int64Type,
+		},
+		"rem": basetypes.ListType{
+			ElemType: types.Int64Type,
+		},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"add": addVal,
+			"rem": remVal,
+		})
+
+	return objVal, diags
+}
+
+func (v AssigneesValue) Equal(o attr.Value) bool {
+	other, ok := o.(AssigneesValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Add.Equal(other.Add) {
+		return false
+	}
+
+	if !v.Rem.Equal(other.Rem) {
+		return false
+	}
+
+	return true
+}
+
+func (v AssigneesValue) Type(ctx context.Context) attr.Type {
+	return AssigneesType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v AssigneesValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"add": basetypes.ListType{
+			ElemType: types.Int64Type,
+		},
+		"rem": basetypes.ListType{
+			ElemType: types.Int64Type,
+		},
+	}
 }
 
 var _ basetypes.ObjectTypable = CustomFieldsType{}
@@ -266,30 +742,12 @@ func (t CustomFieldsType) ValueFromObject(ctx context.Context, in basetypes.Obje
 		return nil, diags
 	}
 
-	valueVal, ok := valueAttribute.(basetypes.BoolValue)
+	valueVal, ok := valueAttribute.(basetypes.StringValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`value expected to be basetypes.BoolValue, was: %T`, valueAttribute))
-	}
-
-	valueOptionsAttribute, ok := attributes["value_options"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`value_options is missing from object`)
-
-		return nil, diags
-	}
-
-	valueOptionsVal, ok := valueOptionsAttribute.(basetypes.ObjectValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`value_options expected to be basetypes.ObjectValue, was: %T`, valueOptionsAttribute))
+			fmt.Sprintf(`value expected to be basetypes.StringValue, was: %T`, valueAttribute))
 	}
 
 	if diags.HasError() {
@@ -297,10 +755,9 @@ func (t CustomFieldsType) ValueFromObject(ctx context.Context, in basetypes.Obje
 	}
 
 	return CustomFieldsValue{
-		Id:           idVal,
-		Value:        valueVal,
-		ValueOptions: valueOptionsVal,
-		state:        attr.ValueStateKnown,
+		Id:    idVal,
+		Value: valueVal,
+		state: attr.ValueStateKnown,
 	}, diags
 }
 
@@ -395,30 +852,12 @@ func NewCustomFieldsValue(attributeTypes map[string]attr.Type, attributes map[st
 		return NewCustomFieldsValueUnknown(), diags
 	}
 
-	valueVal, ok := valueAttribute.(basetypes.BoolValue)
+	valueVal, ok := valueAttribute.(basetypes.StringValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`value expected to be basetypes.BoolValue, was: %T`, valueAttribute))
-	}
-
-	valueOptionsAttribute, ok := attributes["value_options"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`value_options is missing from object`)
-
-		return NewCustomFieldsValueUnknown(), diags
-	}
-
-	valueOptionsVal, ok := valueOptionsAttribute.(basetypes.ObjectValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`value_options expected to be basetypes.ObjectValue, was: %T`, valueOptionsAttribute))
+			fmt.Sprintf(`value expected to be basetypes.StringValue, was: %T`, valueAttribute))
 	}
 
 	if diags.HasError() {
@@ -426,10 +865,9 @@ func NewCustomFieldsValue(attributeTypes map[string]attr.Type, attributes map[st
 	}
 
 	return CustomFieldsValue{
-		Id:           idVal,
-		Value:        valueVal,
-		ValueOptions: valueOptionsVal,
-		state:        attr.ValueStateKnown,
+		Id:    idVal,
+		Value: valueVal,
+		state: attr.ValueStateKnown,
 	}, diags
 }
 
@@ -501,29 +939,25 @@ func (t CustomFieldsType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = CustomFieldsValue{}
 
 type CustomFieldsValue struct {
-	Id           basetypes.StringValue `tfsdk:"id"`
-	Value        basetypes.BoolValue   `tfsdk:"value"`
-	ValueOptions basetypes.ObjectValue `tfsdk:"value_options"`
-	state        attr.ValueState
+	Id    basetypes.StringValue `tfsdk:"id"`
+	Value basetypes.StringValue `tfsdk:"value"`
+	state attr.ValueState
 }
 
 func (v CustomFieldsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 3)
+	attrTypes := make(map[string]tftypes.Type, 2)
 
 	var val tftypes.Value
 	var err error
 
 	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["value"] = basetypes.BoolType{}.TerraformType(ctx)
-	attrTypes["value_options"] = basetypes.ObjectType{
-		AttrTypes: ValueOptionsValue{}.AttributeTypes(ctx),
-	}.TerraformType(ctx)
+	attrTypes["value"] = basetypes.StringType{}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 3)
+		vals := make(map[string]tftypes.Value, 2)
 
 		val, err = v.Id.ToTerraformValue(ctx)
 
@@ -540,14 +974,6 @@ func (v CustomFieldsValue) ToTerraformValue(ctx context.Context) (tftypes.Value,
 		}
 
 		vals["value"] = val
-
-		val, err = v.ValueOptions.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["value_options"] = val
 
 		if err := tftypes.ValidateValue(objectType, vals); err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
@@ -578,33 +1004,9 @@ func (v CustomFieldsValue) String() string {
 func (v CustomFieldsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var valueOptions basetypes.ObjectValue
-
-	if v.ValueOptions.IsNull() {
-		valueOptions = types.ObjectNull(
-			ValueOptionsValue{}.AttributeTypes(ctx),
-		)
-	}
-
-	if v.ValueOptions.IsUnknown() {
-		valueOptions = types.ObjectUnknown(
-			ValueOptionsValue{}.AttributeTypes(ctx),
-		)
-	}
-
-	if !v.ValueOptions.IsNull() && !v.ValueOptions.IsUnknown() {
-		valueOptions = types.ObjectValueMust(
-			ValueOptionsValue{}.AttributeTypes(ctx),
-			v.ValueOptions.Attributes(),
-		)
-	}
-
 	attributeTypes := map[string]attr.Type{
 		"id":    basetypes.StringType{},
-		"value": basetypes.BoolType{},
-		"value_options": basetypes.ObjectType{
-			AttrTypes: ValueOptionsValue{}.AttributeTypes(ctx),
-		},
+		"value": basetypes.StringType{},
 	}
 
 	if v.IsNull() {
@@ -618,9 +1020,8 @@ func (v CustomFieldsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectV
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"id":            v.Id,
-			"value":         v.Value,
-			"value_options": valueOptions,
+			"id":    v.Id,
+			"value": v.Value,
 		})
 
 	return objVal, diags
@@ -649,10 +1050,6 @@ func (v CustomFieldsValue) Equal(o attr.Value) bool {
 		return false
 	}
 
-	if !v.ValueOptions.Equal(other.ValueOptions) {
-		return false
-	}
-
 	return true
 }
 
@@ -667,21 +1064,18 @@ func (v CustomFieldsValue) Type(ctx context.Context) attr.Type {
 func (v CustomFieldsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
 		"id":    basetypes.StringType{},
-		"value": basetypes.BoolType{},
-		"value_options": basetypes.ObjectType{
-			AttrTypes: ValueOptionsValue{}.AttributeTypes(ctx),
-		},
+		"value": basetypes.StringType{},
 	}
 }
 
-var _ basetypes.ObjectTypable = ValueOptionsType{}
+var _ basetypes.ObjectTypable = GroupAssigneesType{}
 
-type ValueOptionsType struct {
+type GroupAssigneesType struct {
 	basetypes.ObjectType
 }
 
-func (t ValueOptionsType) Equal(o attr.Type) bool {
-	other, ok := o.(ValueOptionsType)
+func (t GroupAssigneesType) Equal(o attr.Type) bool {
+	other, ok := o.(GroupAssigneesType)
 
 	if !ok {
 		return false
@@ -690,56 +1084,75 @@ func (t ValueOptionsType) Equal(o attr.Type) bool {
 	return t.ObjectType.Equal(other.ObjectType)
 }
 
-func (t ValueOptionsType) String() string {
-	return "ValueOptionsType"
+func (t GroupAssigneesType) String() string {
+	return "GroupAssigneesType"
 }
 
-func (t ValueOptionsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+func (t GroupAssigneesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	attributes := in.Attributes()
 
-	timeAttribute, ok := attributes["time"]
+	addAttribute, ok := attributes["add"]
 
 	if !ok {
 		diags.AddError(
 			"Attribute Missing",
-			`time is missing from object`)
+			`add is missing from object`)
 
 		return nil, diags
 	}
 
-	timeVal, ok := timeAttribute.(basetypes.BoolValue)
+	addVal, ok := addAttribute.(basetypes.ListValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`time expected to be basetypes.BoolValue, was: %T`, timeAttribute))
+			fmt.Sprintf(`add expected to be basetypes.ListValue, was: %T`, addAttribute))
+	}
+
+	remAttribute, ok := attributes["rem"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`rem is missing from object`)
+
+		return nil, diags
+	}
+
+	remVal, ok := remAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`rem expected to be basetypes.ListValue, was: %T`, remAttribute))
 	}
 
 	if diags.HasError() {
 		return nil, diags
 	}
 
-	return ValueOptionsValue{
-		Time:  timeVal,
+	return GroupAssigneesValue{
+		Add:   addVal,
+		Rem:   remVal,
 		state: attr.ValueStateKnown,
 	}, diags
 }
 
-func NewValueOptionsValueNull() ValueOptionsValue {
-	return ValueOptionsValue{
+func NewGroupAssigneesValueNull() GroupAssigneesValue {
+	return GroupAssigneesValue{
 		state: attr.ValueStateNull,
 	}
 }
 
-func NewValueOptionsValueUnknown() ValueOptionsValue {
-	return ValueOptionsValue{
+func NewGroupAssigneesValueUnknown() GroupAssigneesValue {
+	return GroupAssigneesValue{
 		state: attr.ValueStateUnknown,
 	}
 }
 
-func NewValueOptionsValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (ValueOptionsValue, diag.Diagnostics) {
+func NewGroupAssigneesValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (GroupAssigneesValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
@@ -750,11 +1163,11 @@ func NewValueOptionsValue(attributeTypes map[string]attr.Type, attributes map[st
 
 		if !ok {
 			diags.AddError(
-				"Missing ValueOptionsValue Attribute Value",
-				"While creating a ValueOptionsValue value, a missing attribute value was detected. "+
-					"A ValueOptionsValue must contain values for all attributes, even if null or unknown. "+
+				"Missing GroupAssigneesValue Attribute Value",
+				"While creating a GroupAssigneesValue value, a missing attribute value was detected. "+
+					"A GroupAssigneesValue must contain values for all attributes, even if null or unknown. "+
 					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("ValueOptionsValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+					fmt.Sprintf("GroupAssigneesValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
 			)
 
 			continue
@@ -762,12 +1175,12 @@ func NewValueOptionsValue(attributeTypes map[string]attr.Type, attributes map[st
 
 		if !attributeType.Equal(attribute.Type(ctx)) {
 			diags.AddError(
-				"Invalid ValueOptionsValue Attribute Type",
-				"While creating a ValueOptionsValue value, an invalid attribute value was detected. "+
-					"A ValueOptionsValue must use a matching attribute type for the value. "+
+				"Invalid GroupAssigneesValue Attribute Type",
+				"While creating a GroupAssigneesValue value, an invalid attribute value was detected. "+
+					"A GroupAssigneesValue must use a matching attribute type for the value. "+
 					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("ValueOptionsValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
-					fmt.Sprintf("ValueOptionsValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+					fmt.Sprintf("GroupAssigneesValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("GroupAssigneesValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
 			)
 		}
 	}
@@ -777,49 +1190,68 @@ func NewValueOptionsValue(attributeTypes map[string]attr.Type, attributes map[st
 
 		if !ok {
 			diags.AddError(
-				"Extra ValueOptionsValue Attribute Value",
-				"While creating a ValueOptionsValue value, an extra attribute value was detected. "+
-					"A ValueOptionsValue must not contain values beyond the expected attribute types. "+
+				"Extra GroupAssigneesValue Attribute Value",
+				"While creating a GroupAssigneesValue value, an extra attribute value was detected. "+
+					"A GroupAssigneesValue must not contain values beyond the expected attribute types. "+
 					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("Extra ValueOptionsValue Attribute Name: %s", name),
+					fmt.Sprintf("Extra GroupAssigneesValue Attribute Name: %s", name),
 			)
 		}
 	}
 
 	if diags.HasError() {
-		return NewValueOptionsValueUnknown(), diags
+		return NewGroupAssigneesValueUnknown(), diags
 	}
 
-	timeAttribute, ok := attributes["time"]
+	addAttribute, ok := attributes["add"]
 
 	if !ok {
 		diags.AddError(
 			"Attribute Missing",
-			`time is missing from object`)
+			`add is missing from object`)
 
-		return NewValueOptionsValueUnknown(), diags
+		return NewGroupAssigneesValueUnknown(), diags
 	}
 
-	timeVal, ok := timeAttribute.(basetypes.BoolValue)
+	addVal, ok := addAttribute.(basetypes.ListValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`time expected to be basetypes.BoolValue, was: %T`, timeAttribute))
+			fmt.Sprintf(`add expected to be basetypes.ListValue, was: %T`, addAttribute))
+	}
+
+	remAttribute, ok := attributes["rem"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`rem is missing from object`)
+
+		return NewGroupAssigneesValueUnknown(), diags
+	}
+
+	remVal, ok := remAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`rem expected to be basetypes.ListValue, was: %T`, remAttribute))
 	}
 
 	if diags.HasError() {
-		return NewValueOptionsValueUnknown(), diags
+		return NewGroupAssigneesValueUnknown(), diags
 	}
 
-	return ValueOptionsValue{
-		Time:  timeVal,
+	return GroupAssigneesValue{
+		Add:   addVal,
+		Rem:   remVal,
 		state: attr.ValueStateKnown,
 	}, diags
 }
 
-func NewValueOptionsValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) ValueOptionsValue {
-	object, diags := NewValueOptionsValue(attributeTypes, attributes)
+func NewGroupAssigneesValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) GroupAssigneesValue {
+	object, diags := NewGroupAssigneesValue(attributeTypes, attributes)
 
 	if diags.HasError() {
 		// This could potentially be added to the diag package.
@@ -833,15 +1265,15 @@ func NewValueOptionsValueMust(attributeTypes map[string]attr.Type, attributes ma
 				diagnostic.Detail()))
 		}
 
-		panic("NewValueOptionsValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+		panic("NewGroupAssigneesValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
 	}
 
 	return object
 }
 
-func (t ValueOptionsType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+func (t GroupAssigneesType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
 	if in.Type() == nil {
-		return NewValueOptionsValueNull(), nil
+		return NewGroupAssigneesValueNull(), nil
 	}
 
 	if !in.Type().Equal(t.TerraformType(ctx)) {
@@ -849,11 +1281,11 @@ func (t ValueOptionsType) ValueFromTerraform(ctx context.Context, in tftypes.Val
 	}
 
 	if !in.IsKnown() {
-		return NewValueOptionsValueUnknown(), nil
+		return NewGroupAssigneesValueUnknown(), nil
 	}
 
 	if in.IsNull() {
-		return NewValueOptionsValueNull(), nil
+		return NewGroupAssigneesValueNull(), nil
 	}
 
 	attributes := map[string]attr.Value{}
@@ -876,41 +1308,55 @@ func (t ValueOptionsType) ValueFromTerraform(ctx context.Context, in tftypes.Val
 		attributes[k] = a
 	}
 
-	return NewValueOptionsValueMust(ValueOptionsValue{}.AttributeTypes(ctx), attributes), nil
+	return NewGroupAssigneesValueMust(GroupAssigneesValue{}.AttributeTypes(ctx), attributes), nil
 }
 
-func (t ValueOptionsType) ValueType(ctx context.Context) attr.Value {
-	return ValueOptionsValue{}
+func (t GroupAssigneesType) ValueType(ctx context.Context) attr.Value {
+	return GroupAssigneesValue{}
 }
 
-var _ basetypes.ObjectValuable = ValueOptionsValue{}
+var _ basetypes.ObjectValuable = GroupAssigneesValue{}
 
-type ValueOptionsValue struct {
-	Time  basetypes.BoolValue `tfsdk:"time"`
+type GroupAssigneesValue struct {
+	Add   basetypes.ListValue `tfsdk:"add"`
+	Rem   basetypes.ListValue `tfsdk:"rem"`
 	state attr.ValueState
 }
 
-func (v ValueOptionsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 1)
+func (v GroupAssigneesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
 
 	var val tftypes.Value
 	var err error
 
-	attrTypes["time"] = basetypes.BoolType{}.TerraformType(ctx)
+	attrTypes["add"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
+	attrTypes["rem"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 1)
+		vals := make(map[string]tftypes.Value, 2)
 
-		val, err = v.Time.ToTerraformValue(ctx)
+		val, err = v.Add.ToTerraformValue(ctx)
 
 		if err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
 		}
 
-		vals["time"] = val
+		vals["add"] = val
+
+		val, err = v.Rem.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["rem"] = val
 
 		if err := tftypes.ValidateValue(objectType, vals); err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
@@ -926,23 +1372,74 @@ func (v ValueOptionsValue) ToTerraformValue(ctx context.Context) (tftypes.Value,
 	}
 }
 
-func (v ValueOptionsValue) IsNull() bool {
+func (v GroupAssigneesValue) IsNull() bool {
 	return v.state == attr.ValueStateNull
 }
 
-func (v ValueOptionsValue) IsUnknown() bool {
+func (v GroupAssigneesValue) IsUnknown() bool {
 	return v.state == attr.ValueStateUnknown
 }
 
-func (v ValueOptionsValue) String() string {
-	return "ValueOptionsValue"
+func (v GroupAssigneesValue) String() string {
+	return "GroupAssigneesValue"
 }
 
-func (v ValueOptionsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+func (v GroupAssigneesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	var addVal basetypes.ListValue
+	switch {
+	case v.Add.IsUnknown():
+		addVal = types.ListUnknown(types.StringType)
+	case v.Add.IsNull():
+		addVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		addVal, d = types.ListValue(types.StringType, v.Add.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"add": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"rem": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+		}), diags
+	}
+
+	var remVal basetypes.ListValue
+	switch {
+	case v.Rem.IsUnknown():
+		remVal = types.ListUnknown(types.StringType)
+	case v.Rem.IsNull():
+		remVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		remVal, d = types.ListValue(types.StringType, v.Rem.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"add": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"rem": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+		}), diags
+	}
+
 	attributeTypes := map[string]attr.Type{
-		"time": basetypes.BoolType{},
+		"add": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"rem": basetypes.ListType{
+			ElemType: types.StringType,
+		},
 	}
 
 	if v.IsNull() {
@@ -956,14 +1453,15 @@ func (v ValueOptionsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectV
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"time": v.Time,
+			"add": addVal,
+			"rem": remVal,
 		})
 
 	return objVal, diags
 }
 
-func (v ValueOptionsValue) Equal(o attr.Value) bool {
-	other, ok := o.(ValueOptionsValue)
+func (v GroupAssigneesValue) Equal(o attr.Value) bool {
+	other, ok := o.(GroupAssigneesValue)
 
 	if !ok {
 		return false
@@ -977,23 +1475,469 @@ func (v ValueOptionsValue) Equal(o attr.Value) bool {
 		return true
 	}
 
-	if !v.Time.Equal(other.Time) {
+	if !v.Add.Equal(other.Add) {
+		return false
+	}
+
+	if !v.Rem.Equal(other.Rem) {
 		return false
 	}
 
 	return true
 }
 
-func (v ValueOptionsValue) Type(ctx context.Context) attr.Type {
-	return ValueOptionsType{
+func (v GroupAssigneesValue) Type(ctx context.Context) attr.Type {
+	return GroupAssigneesType{
 		basetypes.ObjectType{
 			AttrTypes: v.AttributeTypes(ctx),
 		},
 	}
 }
 
-func (v ValueOptionsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+func (v GroupAssigneesValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
-		"time": basetypes.BoolType{},
+		"add": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"rem": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+	}
+}
+
+var _ basetypes.ObjectTypable = WatchersType{}
+
+type WatchersType struct {
+	basetypes.ObjectType
+}
+
+func (t WatchersType) Equal(o attr.Type) bool {
+	other, ok := o.(WatchersType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t WatchersType) String() string {
+	return "WatchersType"
+}
+
+func (t WatchersType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributes := in.Attributes()
+
+	addAttribute, ok := attributes["add"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`add is missing from object`)
+
+		return nil, diags
+	}
+
+	addVal, ok := addAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`add expected to be basetypes.ListValue, was: %T`, addAttribute))
+	}
+
+	remAttribute, ok := attributes["rem"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`rem is missing from object`)
+
+		return nil, diags
+	}
+
+	remVal, ok := remAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`rem expected to be basetypes.ListValue, was: %T`, remAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return WatchersValue{
+		Add:   addVal,
+		Rem:   remVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewWatchersValueNull() WatchersValue {
+	return WatchersValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewWatchersValueUnknown() WatchersValue {
+	return WatchersValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewWatchersValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (WatchersValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing WatchersValue Attribute Value",
+				"While creating a WatchersValue value, a missing attribute value was detected. "+
+					"A WatchersValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("WatchersValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid WatchersValue Attribute Type",
+				"While creating a WatchersValue value, an invalid attribute value was detected. "+
+					"A WatchersValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("WatchersValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("WatchersValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra WatchersValue Attribute Value",
+				"While creating a WatchersValue value, an extra attribute value was detected. "+
+					"A WatchersValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra WatchersValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewWatchersValueUnknown(), diags
+	}
+
+	addAttribute, ok := attributes["add"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`add is missing from object`)
+
+		return NewWatchersValueUnknown(), diags
+	}
+
+	addVal, ok := addAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`add expected to be basetypes.ListValue, was: %T`, addAttribute))
+	}
+
+	remAttribute, ok := attributes["rem"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`rem is missing from object`)
+
+		return NewWatchersValueUnknown(), diags
+	}
+
+	remVal, ok := remAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`rem expected to be basetypes.ListValue, was: %T`, remAttribute))
+	}
+
+	if diags.HasError() {
+		return NewWatchersValueUnknown(), diags
+	}
+
+	return WatchersValue{
+		Add:   addVal,
+		Rem:   remVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewWatchersValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) WatchersValue {
+	object, diags := NewWatchersValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewWatchersValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t WatchersType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewWatchersValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewWatchersValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewWatchersValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewWatchersValueMust(WatchersValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t WatchersType) ValueType(ctx context.Context) attr.Value {
+	return WatchersValue{}
+}
+
+var _ basetypes.ObjectValuable = WatchersValue{}
+
+type WatchersValue struct {
+	Add   basetypes.ListValue `tfsdk:"add"`
+	Rem   basetypes.ListValue `tfsdk:"rem"`
+	state attr.ValueState
+}
+
+func (v WatchersValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["add"] = basetypes.ListType{
+		ElemType: types.Int64Type,
+	}.TerraformType(ctx)
+	attrTypes["rem"] = basetypes.ListType{
+		ElemType: types.Int64Type,
+	}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.Add.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["add"] = val
+
+		val, err = v.Rem.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["rem"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v WatchersValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v WatchersValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v WatchersValue) String() string {
+	return "WatchersValue"
+}
+
+func (v WatchersValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var addVal basetypes.ListValue
+	switch {
+	case v.Add.IsUnknown():
+		addVal = types.ListUnknown(types.Int64Type)
+	case v.Add.IsNull():
+		addVal = types.ListNull(types.Int64Type)
+	default:
+		var d diag.Diagnostics
+		addVal, d = types.ListValue(types.Int64Type, v.Add.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"add": basetypes.ListType{
+				ElemType: types.Int64Type,
+			},
+			"rem": basetypes.ListType{
+				ElemType: types.Int64Type,
+			},
+		}), diags
+	}
+
+	var remVal basetypes.ListValue
+	switch {
+	case v.Rem.IsUnknown():
+		remVal = types.ListUnknown(types.Int64Type)
+	case v.Rem.IsNull():
+		remVal = types.ListNull(types.Int64Type)
+	default:
+		var d diag.Diagnostics
+		remVal, d = types.ListValue(types.Int64Type, v.Rem.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"add": basetypes.ListType{
+				ElemType: types.Int64Type,
+			},
+			"rem": basetypes.ListType{
+				ElemType: types.Int64Type,
+			},
+		}), diags
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"add": basetypes.ListType{
+			ElemType: types.Int64Type,
+		},
+		"rem": basetypes.ListType{
+			ElemType: types.Int64Type,
+		},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"add": addVal,
+			"rem": remVal,
+		})
+
+	return objVal, diags
+}
+
+func (v WatchersValue) Equal(o attr.Value) bool {
+	other, ok := o.(WatchersValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Add.Equal(other.Add) {
+		return false
+	}
+
+	if !v.Rem.Equal(other.Rem) {
+		return false
+	}
+
+	return true
+}
+
+func (v WatchersValue) Type(ctx context.Context) attr.Type {
+	return WatchersType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v WatchersValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"add": basetypes.ListType{
+			ElemType: types.Int64Type,
+		},
+		"rem": basetypes.ListType{
+			ElemType: types.Int64Type,
+		},
 	}
 }
