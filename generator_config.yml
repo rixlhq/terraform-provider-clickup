@@ -80,20 +80,6 @@
       },
       "schema": {}
     },
-    "folder": {
-      "read": {
-        "path": "/v2/folder/{folder_id}",
-        "method": "get"
-      },
-      "schema": {}
-    },
-    "goals": {
-      "read": {
-        "path": "/v2/team/{team_id}/goal",
-        "method": "get"
-      },
-      "schema": {}
-    },
     "goal": {
       "read": {
         "path": "/v2/goal/{goal_id}",
@@ -185,30 +171,9 @@
       },
       "schema": {}
     },
-    "task": {
-      "read": {
-        "path": "/v2/task/{task_id}",
-        "method": "get"
-      },
-      "schema": {}
-    },
     "filtered_team_tasks": {
       "read": {
-        "path": "/v2/team/{team_Id}/task",
-        "method": "get"
-      },
-      "schema": {}
-    },
-    "task_s_timein_status": {
-      "read": {
-        "path": "/v2/task/{task_id}/time_in_status",
-        "method": "get"
-      },
-      "schema": {}
-    },
-    "bulk_tasks_timein_status": {
-      "read": {
-        "path": "/v2/task/bulk_time_in_status/task_ids",
+        "path": "/v2/team/{team_id}/task",
         "method": "get"
       },
       "schema": {}
@@ -332,20 +297,6 @@
       },
       "schema": {}
     },
-    "view": {
-      "read": {
-        "path": "/v2/view/{view_id}",
-        "method": "get"
-      },
-      "schema": {}
-    },
-    "view_tasks": {
-      "read": {
-        "path": "/v2/view/{view_id}/task",
-        "method": "get"
-      },
-      "schema": {}
-    },
     "webhooks": {
       "read": {
         "path": "/v2/team/{team_id}/webhook",
@@ -355,25 +306,6 @@
     }
   },
   "resources": {
-    "folder": {
-      "create": {
-        "path": "/v2/space/{space_id}/folder",
-        "method": "post"
-      },
-      "read": {
-        "path": "/v2/folder/{folder_id}",
-        "method": "get"
-      },
-      "update": {
-        "path": "/v2/folder/{folder_id}",
-        "method": "put"
-      },
-      "delete": {
-        "path": "/v2/folder/{folder_id}",
-        "method": "delete"
-      },
-      "schema": {}
-    },
     "goal": {
       "create": {
         "path": "/v2/team/{team_id}/goal",
@@ -446,6 +378,25 @@
       },
       "delete": {
         "path": "/v2/task/{task_id}",
+        "method": "delete"
+      },
+      "schema": {}
+    },
+    "folderless_list": {
+      "create": {
+        "path": "/v2/space/{space_id}/list",
+        "method": "post"
+      },
+      "read": {
+        "path": "/v2/list/{list_id}",
+        "method": "get"
+      },
+      "update": {
+        "path": "/v2/list/{list_id}",
+        "method": "put"
+      },
+      "delete": {
+        "path": "/v2/list/{list_id}",
         "method": "delete"
       },
       "schema": {}

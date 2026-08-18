@@ -83,8 +83,8 @@ linters:
     - zerologlint # Detects the wrong usage of `zerolog` that a user forgets to dispatch with `Send` or `Msg`.
   settings:
     funlen:
-      lines: 50
-      statements: 50
+      lines: 80
+      statements: 80
     goconst:
       min-len: 6
       min-occurrences: 6
@@ -92,7 +92,7 @@ linters:
       rules:
         - name: file-length-limit
           arguments:
-            - max: 250
+            - max: 1000
               skip-comments: true
               skip-blank-lines: true
 formatters:

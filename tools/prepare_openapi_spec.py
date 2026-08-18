@@ -2,6 +2,7 @@
 """Flatten unsupported OpenAPI schema composition for terraform-plugin-codegen-openapi."""
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -14,6 +15,30 @@ def load_spec(path: Path) -> dict:
 def _decode_json_pointer(part: str) -> str:
     """Decode a JSON pointer segment (~1 -> /, ~0 -> ~)."""
     return part.replace("~1", "/").replace("~0", "~")
+
+
+def normalize_path_key(path: str) -> str:
+    """Lower-case path placeholders so they match Terraform attribute names."""
+    return re.sub(r"\{(\w+)\}", lambda m: "{" + m.group(1).lower() + "}", path)
+
+
+def normalize_path_params_in_spec(spec: dict) -> None:
+    """Lower-case path parameter names and path keys so code generation sees
+    consistent snake_case placeholders (e.g. {team_id} not {team_Id})."""
+    if "paths" not in spec:
+        return
+    paths = spec["paths"]
+    new_paths: dict = {}
+    for path, path_item in paths.items():
+        norm_path = normalize_path_key(path)
+        new_paths[norm_path] = path_item
+        for op in path_item.values():
+            if not isinstance(op, dict):
+                continue
+            for param in op.get("parameters", []):
+                if isinstance(param, dict) and param.get("in") == "path":
+                    param["name"] = param["name"].lower()
+    spec["paths"] = new_paths
 
 
 def resolve(ref_or_schema: any, spec: dict, visited: set) -> any:
@@ -52,7 +77,10 @@ def normalize_type(t: any) -> str | None:
         for candidate in t:
             if candidate != "null":
                 return candidate
-        return None
+        # A type of ["null"] only means the field is nullable with no other
+        # type constraints; default to string so the generator can still emit
+        # an attribute.
+        return "string"
     return t
 
 
@@ -180,8 +208,38 @@ def transform(schema: any, spec: dict, visited: set | None = None) -> any:
     return out
 
 
+def normalize_refs(spec: dict) -> None:
+    """Lower-case path parameter placeholders inside $ref values.
+
+    Path normalization rewrites path keys like /v2/team/{team_Id}/task to
+    /v2/team/{team_id}/task, but $ref JSON pointers still use the original
+    placeholder spelling. Rewriting the $ref keeps internal pointers valid so
+    that path-level schemas (for example, the tag object shared by task and
+    time entry endpoints) are resolved correctly.
+    """
+
+    def normalize_ref_value(v: any) -> any:
+        if isinstance(v, dict):
+            for k, val in v.items():
+                if k == "$ref" and isinstance(val, str):
+                    v[k] = re.sub(r"\{(\w+)\}", lambda m: "{" + m.group(1).lower() + "}", val)
+                else:
+                    v[k] = normalize_ref_value(val)
+            return v
+        if isinstance(v, list):
+            return [normalize_ref_value(e) for e in v]
+        return v
+
+    for path, path_item in spec.get("paths", {}).items():
+        normalize_ref_value(path_item)
+    for name, schema in spec.get("components", {}).get("schemas", {}).items():
+        spec["components"]["schemas"][name] = normalize_ref_value(schema)
+
+
 def prepare(spec: dict) -> dict:
     spec = json.loads(json.dumps(spec))
+    normalize_path_params_in_spec(spec)
+    normalize_refs(spec)
     uniquify_titles(spec)
     spec["components"]["schemas"] = {
         name: transform(schema, spec)

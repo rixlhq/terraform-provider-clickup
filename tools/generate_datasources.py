@@ -2,6 +2,7 @@
 """Generate internal/provider/datasources.go from generator_config.yml."""
 
 import json
+import re
 from pathlib import Path
 
 CONFIG_PATH = Path("generator_config.yml")
@@ -10,6 +11,11 @@ OUTPUT_PATH = Path("internal/provider/datasources.go")
 
 def snake_to_camel(s: str) -> str:
     return "".join(part[:1].upper() + part[1:] for part in s.split("_") if part)
+
+
+def normalize_path_params(path: str) -> str:
+    """Lower-case path placeholders so they match Terraform attribute names."""
+    return re.sub(r"\{(\w+)\}", lambda m: "{" + m.group(1).lower() + "}", path)
 
 
 def main() -> None:
@@ -26,7 +32,7 @@ def main() -> None:
             continue
         camel = snake_to_camel(name)
         schema_func = f"{camel}DataSourceSchema"
-        path = data_sources[name]["read"]["path"]
+        path = normalize_path_params(data_sources[name]["read"]["path"])
         imports.append(f'\t{pkg} "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/{pkg}"')
         constructors.append(
             f"""func new{camel}DataSource() datasource.DataSource {{
