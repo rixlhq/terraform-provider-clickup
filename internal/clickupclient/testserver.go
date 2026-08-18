@@ -2,7 +2,6 @@ package clickupclient
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -38,10 +37,13 @@ func (ts *TestServer) Register(method, path string, fn http.HandlerFunc) {
 // specified method and path.
 func (ts *TestServer) RegisterStatic(method, path string, status int, body any) {
 	ts.Register(method, path, func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(status)
-		if err := json.NewEncoder(w).Encode(body); err != nil {
-			_ = fmt.Errorf("test server encode: %w", err)
+		b, err := json.Marshal(body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
+		w.WriteHeader(status)
+		_, _ = w.Write(b)
 	})
 }
 
