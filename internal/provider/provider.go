@@ -91,7 +91,13 @@ func envOrString(v types.String, env string) types.String {
 }
 
 func (p *ClickUpProvider) Resources(ctx context.Context) []func() resource.Resource {
-	return append(resourceFactories, newFolderResource, newWebhookResource)
+	return append(resourceFactories,
+		newFolderResource,
+		newListCommentResource,
+		newTaskCommentResource,
+		newViewCommentResource,
+		newWebhookResource,
+	)
 }
 
 func (p *ClickUpProvider) DataSources(ctx context.Context) []func() datasource.DataSource {

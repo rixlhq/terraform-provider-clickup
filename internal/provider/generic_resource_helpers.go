@@ -36,8 +36,13 @@ func (r *genericResource) idFromValue(v tftypes.Value) (string, diag.Diagnostics
 }
 
 func (r *genericResource) idParam() string {
-	for _, match := range pathParamRegex.FindAllStringSubmatch(r.readPath, -1) {
-		return match[1]
+	if r.idField != "" {
+		return r.idField
+	}
+	for _, path := range []string{r.deletePath, r.updatePath, r.readPath} {
+		for _, match := range pathParamRegex.FindAllStringSubmatch(path, -1) {
+			return match[1]
+		}
 	}
 	return "id"
 }
@@ -69,7 +74,7 @@ func (r *genericResource) buildPath(path string, v tftypes.Value) (string, diag.
 	return out, diags
 }
 
-func (r *genericResource) buildBody(ctx context.Context, v tftypes.Value, fields []string) ([]byte, diag.Diagnostics) {
+func (r *genericResource) buildBody(ctx context.Context, v tftypes.Value, fields []string, defaults map[string]any) ([]byte, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	j, err := clickupcommon.TfValueToJSON(ctx, v)
 	if err != nil {
@@ -86,6 +91,12 @@ func (r *genericResource) buildBody(ctx context.Context, v tftypes.Value, fields
 	body := make(map[string]any, len(fields))
 	for _, f := range fields {
 		if val, ok := all[f]; ok {
+			if val == nil {
+				if d, ok := defaults[f]; ok {
+					body[f] = d
+					continue
+				}
+			}
 			body[f] = val
 		}
 	}

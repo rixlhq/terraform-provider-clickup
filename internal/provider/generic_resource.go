@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -18,17 +19,29 @@ import (
 // full create/read/update/delete cycle. It uses the generated Terraform schema and
 // the API paths configured in generator_config.yml.
 type genericResource struct {
-	client           *clickupclient.Client
-	name             string
-	createPath       string
-	readPath         string
-	updatePath       string
-	deletePath       string
-	updateMethod     string
-	createBodyFields []string
-	updateBodyFields []string
-	schemaFunc       func(context.Context) resource_schema.Schema
-	schema           resource_schema.Schema
+	client             *clickupclient.Client
+	name               string
+	createPath         string
+	readPath           string
+	updatePath         string
+	deletePath         string
+	updateMethod       string
+	createBodyFields   []string
+	updateBodyFields   []string
+	createBodyDefaults map[string]any
+	updateBodyDefaults map[string]any
+	schemaFunc         func(context.Context) resource_schema.Schema
+	schema             resource_schema.Schema
+	// readFromList is set when the API has no single-GET endpoint. The resource
+	// reads the collection at readPath and filters the item whose
+	// readListIDField equals the resource ID.
+	readFromList    bool
+	readListRoot    string
+	readListIDField string
+	// idField is the Terraform attribute name that holds the resource ID. When
+	// empty it is derived from the first path parameter of updatePath/deletePath
+	// or readPath.
+	idField string
 }
 
 func (r *genericResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -65,7 +78,7 @@ func (r *genericResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	body, diags := r.buildBody(ctx, plan, r.createBodyFields)
+	body, diags := r.buildBody(ctx, plan, r.createBodyFields, r.createBodyDefaults)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -127,7 +140,7 @@ func (r *genericResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	body, diags := r.buildBody(ctx, plan, r.updateBodyFields)
+	body, diags := r.buildBody(ctx, plan, r.updateBodyFields, r.updateBodyDefaults)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -196,19 +209,9 @@ func (r *genericResource) readModel(ctx context.Context, base tftypes.Value, id 
 		return tftypes.Value{}, diags
 	}
 
-	raw, err := r.client.Get(ctx, readPath, nil)
-	if err != nil {
-		if clickupclient.IsNotFound(err) {
-			diags.AddWarning("Not Found", fmt.Sprintf("ClickUp API returned 404 for %s %s", r.name, id))
-			return tftypes.Value{}, diags
-		}
-		diags.AddError("ClickUp API Error", err.Error())
-		return tftypes.Value{}, diags
-	}
-
-	jv, err := clickupcommon.DecodeJSONResponse(raw)
-	if err != nil {
-		diags.AddError("Response Decode Error", err.Error())
+	jv, d := r.getAndDecode(ctx, readPath, id)
+	diags.Append(d...)
+	if diags.HasError() {
 		return tftypes.Value{}, diags
 	}
 
@@ -225,4 +228,58 @@ func (r *genericResource) readModel(ctx context.Context, base tftypes.Value, id 
 	}
 
 	return final, diags
+}
+
+func (r *genericResource) getAndDecode(ctx context.Context, readPath, id string) (any, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	raw, err := r.client.Get(ctx, readPath, nil)
+	if err != nil {
+		if clickupclient.IsNotFound(err) {
+			diags.AddWarning("Not Found", fmt.Sprintf("ClickUp API returned 404 for %s %s", r.name, id))
+			return nil, diags
+		}
+		diags.AddError("ClickUp API Error", err.Error())
+		return nil, diags
+	}
+
+	jv, err := clickupcommon.DecodeJSONResponse(raw)
+	if err != nil {
+		diags.AddError("Response Decode Error", err.Error())
+		return nil, diags
+	}
+
+	if r.readFromList {
+		jv, err = r.findInList(jv, id)
+		if err != nil {
+			diags.AddError("Read Error", err.Error())
+			return nil, diags
+		}
+	}
+
+	return jv, diags
+}
+
+func (r *genericResource) findInList(jv any, id string) (any, error) {
+	root, ok := jv.(map[string]any)
+	if !ok {
+		return nil, errors.New("list response is not a JSON object")
+	}
+	items, ok := root[r.readListRoot].([]any)
+	if !ok {
+		return nil, fmt.Errorf("list response did not contain %q array", r.readListRoot)
+	}
+	for _, item := range items {
+		obj, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		v, ok := obj[r.readListIDField]
+		if !ok {
+			continue
+		}
+		if valueToIDString(v) == id {
+			return item, nil
+		}
+	}
+	return nil, fmt.Errorf("%s with %s=%q not found in list", r.name, r.readListIDField, id)
 }
