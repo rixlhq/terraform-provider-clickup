@@ -3,6 +3,7 @@ package provider
 
 import (
 	"context"
+	"maps"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -18,6 +19,9 @@ func newSpaceTagResource() resource.Resource {
 		updateMethod:     "put",
 		createBodyFields: []string{"tag"},
 		updateBodyFields: []string{"tag"},
+		updateBodyTransforms: map[string]func(any) any{
+			"tag": spaceTagUpdateColorNames,
+		},
 		readFromList:     true,
 		readListRoot:     "tags",
 		readListIDField:  "name",
@@ -53,4 +57,25 @@ func spaceTagSchema(_ context.Context) schema.Schema {
 			},
 		},
 	}
+}
+
+// spaceTagUpdateColorNames renames the create-scoped tag color keys
+// (tag_fg / tag_bg) to the update-scoped keys (fg_color / bg_color) used by
+// the ClickUp PUT /v2/space/{space_id}/tag/{tag_name} endpoint.
+func spaceTagUpdateColorNames(v any) any {
+	m, ok := v.(map[string]any)
+	if !ok {
+		return v
+	}
+
+	out := maps.Clone(m)
+	if fg, ok := out["tag_fg"]; ok {
+		out["fg_color"] = fg
+		delete(out, "tag_fg")
+	}
+	if bg, ok := out["tag_bg"]; ok {
+		out["bg_color"] = bg
+		delete(out, "tag_bg")
+	}
+	return out
 }
