@@ -48,7 +48,9 @@ description = "Generate provider code from the ClickUp OpenAPI spec"
 run = [
   "python3 tools/prepare_openapi_spec.py ClickUp_PUBLIC_API_V2.json ClickUp_PUBLIC_API_V2.prepared.json",
   "python3 tools/generate_data_sources.py",
-  "tfplugingen-openapi generate --config generator_config.yml --output provider_code_spec.json ClickUp_PUBLIC_API_V2.prepared.json",
+  "python3 tools/merge_update_schemas.py ClickUp_PUBLIC_API_V2.prepared.json generator_config.yml ClickUp_PUBLIC_API_V2.prepared.merged.json",
+  "tfplugingen-openapi generate --config generator_config.yml --output provider_code_spec.json ClickUp_PUBLIC_API_V2.prepared.merged.json",
+  "python3 tools/post_process_provider_code_spec.py provider_code_spec.json",
   "tfplugingen-framework generate all --input provider_code_spec.json --output internal/provider/generated",
   "python3 tools/generate_datasources.py",
   "python3 tools/generate_resources.py",

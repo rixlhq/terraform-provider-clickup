@@ -8,6 +8,37 @@ from pathlib import Path
 SPEC_PATH = Path("ClickUp_PUBLIC_API_V2.prepared.json")
 CONFIG_PATH = Path("generator_config.yml")
 
+# Data sources whose generated schemas are unusable or intentionally raw JSON.
+# They are implemented by hand in internal/provider/datasources_manual.go.
+HAND_WRITTEN_DATA_SOURCES = {
+    "folder",
+    "goals",
+    "task",
+    "view",
+    "view_tasks",
+    "task_s_timein_status",
+    "bulk_tasks_timein_status",
+    "time_entries",
+}
+
+# Extra resources that build_resources does not discover automatically.
+# These have create/read/update/delete (or list-read) and can use the
+# genericResource scaffolding.
+MANUAL_RESOURCES = {
+    "folderless_list": {
+        "create": {"path": "/v2/space/{space_id}/list", "method": "post"},
+        "read": {"path": "/v2/list/{list_id}", "method": "get"},
+        "update": {"path": "/v2/list/{list_id}", "method": "put"},
+        "delete": {"path": "/v2/list/{list_id}", "method": "delete"},
+        "schema": {},
+    },
+}
+
+
+def normalize_path_params(path: str) -> str:
+    """Lower-case path placeholders so they match Terraform attribute names."""
+    return re.sub(r"\{(\w+)\}", lambda m: "{" + m.group(1).lower() + "}", path)
+
 
 def camel_to_snake(name: str) -> str:
     name = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", name)
@@ -60,6 +91,10 @@ def build_resources(spec: dict) -> dict:
                 }
             )
 
+    # Resources that are implemented by hand-written Go files instead of the
+    # tfplugingen-framework generator.
+    hand_written_resources = {"folder", "user_group", "view"}
+
     resources = {}
     for base, methods in groups.items():
         # A full Terraform resource needs create, read, update, and delete.
@@ -74,6 +109,9 @@ def build_resources(spec: dict) -> dict:
         if not name:
             name = camel_to_snake(base).strip("_")
 
+        if name in hand_written_resources:
+            continue
+
         def pick(methods_for_kind):
             # Prefer the shortest path for a given method (avoids sub-action variants).
             return min(methods_for_kind, key=lambda x: len(x["path"]))
@@ -85,19 +123,19 @@ def build_resources(spec: dict) -> dict:
 
         resources[name] = {
             "create": {
-                "path": create["path"],
+                "path": normalize_path_params(create["path"]),
                 "method": operation_method(create["method"]),
             },
             "read": {
-                "path": read["path"],
+                "path": normalize_path_params(read["path"]),
                 "method": operation_method(read["method"]),
             },
             "update": {
-                "path": update["path"],
+                "path": normalize_path_params(update["path"]),
                 "method": operation_method(update["method"]),
             },
             "delete": {
-                "path": delete_op["path"],
+                "path": normalize_path_params(delete_op["path"]),
                 "method": operation_method(delete_op["method"]),
             },
             "schema": {},
@@ -132,6 +170,8 @@ def main() -> None:
                 continue
 
             name = data_source_name(op_id)
+            if name in HAND_WRITTEN_DATA_SOURCES:
+                continue
 
             path_param_names = {par["name"] for par in all_params if par.get("in") == "path"}
 
@@ -148,11 +188,14 @@ def main() -> None:
                 schema["ignores"] = query_ignores
 
             config["data_sources"][name] = {
-                "read": {"path": path, "method": "get"},
+                "read": {"path": normalize_path_params(path), "method": "get"},
                 "schema": schema if schema else {},
             }
 
     config["resources"] = build_resources(spec)
+    for name, res in MANUAL_RESOURCES.items():
+        if name not in config["resources"]:
+            config["resources"][name] = res
 
     # Write as JSON because the YAML parser accepts JSON and PyYAML may not be installed.
     CONFIG_PATH.write_text(json.dumps(config, indent=2))

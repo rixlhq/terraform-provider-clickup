@@ -29,4 +29,5 @@ terraform.d/
 # Generated OpenAPI code generation intermediates
 ClickUp_PUBLIC_API_V3.prepared.json
 ClickUp_PUBLIC_API_V2.prepared.json
+ClickUp_PUBLIC_API_V2.prepared.merged.json
 provider_code_spec.json
