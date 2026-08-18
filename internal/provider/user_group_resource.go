@@ -23,6 +23,9 @@ func newUserGroupResource() resource.Resource {
 		readListIDField:  "id",
 		readQueryParams:  map[string]string{"team_id": "team_id"},
 		createBodyFields: []string{"name", "handle", "members"},
+		createBodyDefaults: map[string]any{
+			"members": map[string]any{"add": []any{}, "rem": []any{}},
+		},
 		updateBodyFields: []string{"name", "handle", "members"},
 		createBodyTransforms: map[string]func(any) any{
 			"members": extractAddList,
