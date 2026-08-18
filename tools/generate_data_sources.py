@@ -5,7 +5,7 @@ import json
 import re
 from pathlib import Path
 
-SPEC_PATH = Path("ClickUp_PUBLIC_API_V3.prepared.json")
+SPEC_PATH = Path("ClickUp_PUBLIC_API_V2.prepared.json")
 CONFIG_PATH = Path("generator_config.yml")
 
 
@@ -16,9 +16,10 @@ def camel_to_snake(name: str) -> str:
 
 def data_source_name(operation_id: str) -> str:
     # Strip common read prefixes, then snake-case.
-    cleaned = re.sub(r"^(get|search)", "", operation_id)
+    cleaned = re.sub(r"^(Get|get|Search|search)", "", operation_id)
     cleaned = camel_to_snake(cleaned)
-    cleaned = cleaned.strip("_")
+    cleaned = re.sub(r"[^a-z0-9_]", "_", cleaned)
+    cleaned = re.sub(r"_+", "_", cleaned).strip("_")
     # Remove trailing "public" to keep names short.
     cleaned = re.sub(r"_public$", "", cleaned)
     return cleaned
@@ -26,7 +27,7 @@ def data_source_name(operation_id: str) -> str:
 
 def resource_base(operation_id: str) -> str:
     # Strip common mutating/reading prefixes to find the entity name.
-    return re.sub(r"^(create|get|update|patch|delete)", "", operation_id)
+    return re.sub(r"^(Create|create|Get|get|Update|update|Patch|patch|Delete|delete|Remove|remove)", "", operation_id)
 
 
 def operation_method(method: str) -> str:
@@ -123,13 +124,23 @@ def main() -> None:
             if not resp.get("schema"):
                 continue
 
+            all_params = op.get("parameters", [])
+            path_names = {p["name"].lower() for p in all_params if p.get("in") == "path"}
+            query_names = {p["name"].lower() for p in all_params if p.get("in") == "query"}
+            if path_names & query_names:
+                # Path and query params normalize to the same Terraform attribute; skip to avoid schema conflicts.
+                continue
+
             name = data_source_name(op_id)
 
+            path_param_names = {par["name"] for par in all_params if par.get("in") == "path"}
+
             query_ignores = []
-            for par in op.get("parameters", []):
+            for par in all_params:
                 if par.get("in") != "query":
                     continue
-                if par["name"] in ("next_cursor", "channel_types"):
+                # Ignore query params that share a name with a path param to avoid duplicate attributes.
+                if par["name"] in path_param_names or par["name"] in ("next_cursor", "channel_types"):
                     query_ignores.append(par["name"])
 
             schema = {}

@@ -11,22 +11,49 @@ def load_spec(path: Path) -> dict:
     return json.loads(text)
 
 
+def _decode_json_pointer(part: str) -> str:
+    """Decode a JSON pointer segment (~1 -> /, ~0 -> ~)."""
+    return part.replace("~1", "/").replace("~0", "~")
+
+
 def resolve(ref_or_schema: any, spec: dict, visited: set) -> any:
     if not isinstance(ref_or_schema, dict):
         return ref_or_schema
 
     if "$ref" in ref_or_schema:
         ref = ref_or_schema["$ref"]
-        if not ref.startswith("#/components/schemas/"):
+        if not ref.startswith("#/"):
             return ref_or_schema
-        name = ref.split("/")[-1]
-        if name in visited:
+
+        if ref in visited:
             return {"type": "object"}
-        visited.add(name)
-        component = spec["components"]["schemas"].get(name, {})
-        return resolve(component, spec, visited)
+        visited.add(ref)
+
+        if ref.startswith("#/components/schemas/"):
+            name = ref.split("/")[-1]
+            component = spec["components"]["schemas"].get(name, {})
+            return resolve(component, spec, visited)
+
+        # Resolve other internal JSON pointers (e.g. into paths).
+        parts = [_decode_json_pointer(p) for p in ref.lstrip("#/").split("/") if p != ""]
+        current = spec
+        for part in parts:
+            if not isinstance(current, dict) or part not in current:
+                return {"type": "object"}
+            current = current[part]
+        return resolve(current, spec, visited)
 
     return ref_or_schema
+
+
+def normalize_type(t: any) -> str | None:
+    """Return a single string type, handling OpenAPI 3.1 type arrays."""
+    if isinstance(t, list):
+        for candidate in t:
+            if candidate != "null":
+                return candidate
+        return None
+    return t
 
 
 def merge_schemas(schemas: list, spec: dict, visited: set) -> dict:
@@ -44,7 +71,7 @@ def merge_schemas(schemas: list, spec: dict, visited: set) -> dict:
         if "description" in s:
             merged["description"] = s["description"]
         if "type" in s:
-            merged["type"] = s["type"]
+            merged["type"] = normalize_type(s["type"])
 
         for prop, prop_schema in s.get("properties", {}).items():
             merged["properties"][prop] = transform(prop_schema, spec, visited)
@@ -76,9 +103,11 @@ def flatten_one_of(schemas: list, spec: dict, visited: set) -> dict:
     types = set()
     for s in resolved:
         if isinstance(s, dict) and "type" in s:
-            types.add(s["type"])
+            t = normalize_type(s["type"])
+            if t:
+                types.add(t)
 
-    if "object" in types or all(isinstance(s, dict) and s.get("type") == "object" for s in resolved if isinstance(s, dict)):
+    if "object" in types or all(isinstance(s, dict) and normalize_type(s.get("type")) == "object" for s in resolved if isinstance(s, dict)):
         return merge_schemas(schemas, spec, visited)
 
     if types == {"integer", "string"} or types == {"number", "string"}:
@@ -133,6 +162,11 @@ def transform(schema: any, spec: dict, visited: set | None = None) -> any:
     for k, v in schema.items():
         if k in ("allOf", "anyOf", "oneOf"):
             continue
+        if k == "type":
+            t = normalize_type(v)
+            if t:
+                out[k] = t
+            continue
         if k == "properties" and isinstance(v, dict):
             out[k] = {prop: transform(prop_schema, spec, visited) for prop, prop_schema in v.items()}
         elif k in ("items", "additionalProperties") and isinstance(v, (dict, bool)):
@@ -153,11 +187,16 @@ def prepare(spec: dict) -> dict:
         for name, schema in spec.get("components", {}).get("schemas", {}).items()
     }
     for path, path_item in spec.get("paths", {}).items():
+        # Merge path-level parameters into each operation.
+        path_params = [transform(p, spec) for p in path_item.pop("parameters", []) if isinstance(p, dict)]
         for method, operation in path_item.items():
             if not isinstance(operation, dict):
                 continue
             if "parameters" in operation:
-                operation["parameters"] = [transform(p, spec) for p in operation["parameters"]]
+                op_params = [transform(p, spec) for p in operation["parameters"] if isinstance(p, dict)]
+                operation["parameters"] = path_params + op_params
+            elif path_params:
+                operation["parameters"] = path_params
             if "requestBody" in operation:
                 operation["requestBody"] = transform(operation["requestBody"], spec)
             if "responses" in operation:
