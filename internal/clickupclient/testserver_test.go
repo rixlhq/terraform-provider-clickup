@@ -22,7 +22,7 @@ func TestTestServerStatic(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if string(body) != `{"id":"123","name":"test"}`+"\n" {
+	if string(body) != `{"id":"123","name":"test"}` {
 		t.Fatalf("unexpected body: %s", string(body))
 	}
 }
