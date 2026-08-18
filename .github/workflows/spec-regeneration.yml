@@ -1,0 +1,58 @@
+name: Weekly ClickUp spec regeneration
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  regenerate:
+    name: Regenerate provider from OpenAPI spec
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Install generators
+        run: |
+          go install github.com/hashicorp/terraform-plugin-codegen-openapi/cmd/tfplugingen-openapi@v0.3.0
+          go install github.com/hashicorp/terraform-plugin-codegen-framework/cmd/tfplugingen-framework@v0.4.1
+
+      - name: Download latest ClickUp OpenAPI spec
+        run: curl -L -o ClickUp_PUBLIC_API_V3.yaml https://developer.clickup.com/openapi/ClickUp_PUBLIC_API_V3.yaml
+
+      - name: Regenerate provider code
+        run: |
+          python3 tools/prepare_openapi_spec.py ClickUp_PUBLIC_API_V3.yaml ClickUp_PUBLIC_API_V3.prepared.json
+          python3 tools/generate_data_sources.py
+          tfplugingen-openapi generate --config generator_config.yml --output provider_code_spec.json ClickUp_PUBLIC_API_V3.prepared.json
+          rm -rf internal/provider/generated
+          tfplugingen-framework generate all --input provider_code_spec.json --output internal/provider/generated
+          python3 tools/generate_datasources.py
+          python3 tools/deduplicate_generated_page.py
+          gofmt -w internal/provider/datasources.go internal/provider/generated/datasource_page/page_data_source_gen.go
+
+      - name: Build and test
+        run: |
+          go build ./...
+          go test ./...
+
+      - name: Create pull request if changed
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: automated/spec-regeneration
+          title: 'chore: regenerate provider from latest ClickUp OpenAPI spec'
+          body: |
+            This is an automated weekly regeneration of the provider code from the
+            latest ClickUp Public API V3 OpenAPI specification.
+          commit-message: 'chore: regenerate provider from latest ClickUp OpenAPI spec'
