@@ -25,3 +25,7 @@ go.work.sum
 .terraform.lock.hcl
 terraform.rc
 terraform.d/
+
+# Generated OpenAPI code generation intermediates
+ClickUp_PUBLIC_API_V3.prepared.json
+provider_code_spec.json

@@ -95,7 +95,7 @@ func (p *ClickUpProvider) Resources(ctx context.Context) []func() resource.Resou
 }
 
 func (p *ClickUpProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return dataSourceFactories
 }
 
 // New returns a factory for the ClickUp provider.
