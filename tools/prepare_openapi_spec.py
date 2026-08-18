@@ -182,6 +182,7 @@ def transform(schema: any, spec: dict, visited: set | None = None) -> any:
 
 def prepare(spec: dict) -> dict:
     spec = json.loads(json.dumps(spec))
+    uniquify_titles(spec)
     spec["components"]["schemas"] = {
         name: transform(schema, spec)
         for name, schema in spec.get("components", {}).get("schemas", {}).items()
@@ -204,6 +205,32 @@ def prepare(spec: dict) -> dict:
                     code: transform(resp, spec) for code, resp in operation["responses"].items()
                 }
     return spec
+
+
+def uniquify_titles(spec: dict) -> None:
+    """Make sure every object schema has a unique title so the code generator
+    does not produce duplicate Go type names within a package."""
+    seen = set()
+
+    def walk(v: any) -> None:
+        if isinstance(v, dict):
+            if v.get("type") == "object" and isinstance(v.get("title"), str):
+                title = v["title"]
+                original = title
+                counter = 1
+                while title in seen:
+                    title = f"{original}_{counter}"
+                    counter += 1
+                seen.add(title)
+                v["title"] = title
+            for item in v.values():
+                walk(item)
+        elif isinstance(v, list):
+            for item in v:
+                walk(item)
+
+    walk(spec.get("components", {}).get("schemas", {}))
+    walk(spec.get("paths", {}))
 
 
 def main() -> None:

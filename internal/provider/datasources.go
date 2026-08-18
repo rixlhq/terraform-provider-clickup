@@ -4,7 +4,396 @@ package provider
 
 import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	datasource_accessible_custom_fields "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_accessible_custom_fields"
+	datasource_alltagsfromtimeentries "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_alltagsfromtimeentries"
+	datasource_authorized_teams "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_authorized_teams"
+	datasource_authorized_user "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_authorized_user"
+	datasource_chat_view_comments "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_chat_view_comments"
+	datasource_custom_items "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_custom_items"
+	datasource_custom_roles "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_custom_roles"
+	datasource_filtered_team_tasks "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_filtered_team_tasks"
+	datasource_folder_available_fields "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_folder_available_fields"
+	datasource_folder_templates "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_folder_templates"
+	datasource_folder_views "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_folder_views"
+	datasource_folderless_lists "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_folderless_lists"
+	datasource_folders "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_folders"
+	datasource_goal "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_goal"
+	datasource_guest "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_guest"
+	datasource_list "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_list"
+	datasource_list_comments "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_list_comments"
+	datasource_list_members "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_list_members"
+	datasource_list_templates "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_list_templates"
+	datasource_list_views "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_list_views"
+	datasource_lists "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_lists"
+	datasource_runningtimeentry "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_runningtimeentry"
+	datasource_shared_hierarchy "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_shared_hierarchy"
+	datasource_singulartimeentry "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_singulartimeentry"
+	datasource_space "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_space"
+	datasource_space_available_fields "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_space_available_fields"
+	datasource_space_tags "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_space_tags"
+	datasource_space_views "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_space_views"
+	datasource_spaces "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_spaces"
+	datasource_task_comments "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_task_comments"
+	datasource_task_members "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_task_members"
+	datasource_task_templates "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_task_templates"
+	datasource_tasks "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_tasks"
+	datasource_team_available_fields "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_team_available_fields"
+	datasource_team_views "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_team_views"
+	datasource_teams1 "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_teams1"
+	datasource_threaded_comments "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_threaded_comments"
+	datasource_timeentryhistory "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_timeentryhistory"
+	datasource_trackedtime "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_trackedtime"
+	datasource_user "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_user"
+	datasource_webhooks "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_webhooks"
+	datasource_workspaceplan "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_workspaceplan"
+	datasource_workspaceseats "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_workspaceseats"
 )
 
 // dataSourceFactories returns all ClickUp data sources implemented by this provider.
-var dataSourceFactories = []func() datasource.DataSource{}
+var dataSourceFactories = []func() datasource.DataSource{
+	newAccessibleCustomFieldsDataSource,
+	newAlltagsfromtimeentriesDataSource,
+	newAuthorizedTeamsDataSource,
+	newAuthorizedUserDataSource,
+	newChatViewCommentsDataSource,
+	newCustomItemsDataSource,
+	newCustomRolesDataSource,
+	newFilteredTeamTasksDataSource,
+	newFolderAvailableFieldsDataSource,
+	newFolderTemplatesDataSource,
+	newFolderViewsDataSource,
+	newFolderlessListsDataSource,
+	newFoldersDataSource,
+	newGoalDataSource,
+	newGuestDataSource,
+	newListDataSource,
+	newListCommentsDataSource,
+	newListMembersDataSource,
+	newListTemplatesDataSource,
+	newListViewsDataSource,
+	newListsDataSource,
+	newRunningtimeentryDataSource,
+	newSharedHierarchyDataSource,
+	newSingulartimeentryDataSource,
+	newSpaceDataSource,
+	newSpaceAvailableFieldsDataSource,
+	newSpaceTagsDataSource,
+	newSpaceViewsDataSource,
+	newSpacesDataSource,
+	newTaskCommentsDataSource,
+	newTaskMembersDataSource,
+	newTaskTemplatesDataSource,
+	newTasksDataSource,
+	newTeamAvailableFieldsDataSource,
+	newTeamViewsDataSource,
+	newTeams1DataSource,
+	newThreadedCommentsDataSource,
+	newTimeentryhistoryDataSource,
+	newTrackedtimeDataSource,
+	newUserDataSource,
+	newWebhooksDataSource,
+	newWorkspaceplanDataSource,
+	newWorkspaceseatsDataSource,
+}
+
+func newAccessibleCustomFieldsDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "accessible_custom_fields",
+		path:       "/v2/list/{list_id}/field",
+		schemaFunc: datasource_accessible_custom_fields.AccessibleCustomFieldsDataSourceSchema,
+	}
+}
+func newAlltagsfromtimeentriesDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "alltagsfromtimeentries",
+		path:       "/v2/team/{team_id}/time_entries/tags",
+		schemaFunc: datasource_alltagsfromtimeentries.AlltagsfromtimeentriesDataSourceSchema,
+	}
+}
+func newAuthorizedTeamsDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "authorized_teams",
+		path:       "/v2/team",
+		schemaFunc: datasource_authorized_teams.AuthorizedTeamsDataSourceSchema,
+	}
+}
+func newAuthorizedUserDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "authorized_user",
+		path:       "/v2/user",
+		schemaFunc: datasource_authorized_user.AuthorizedUserDataSourceSchema,
+	}
+}
+func newChatViewCommentsDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "chat_view_comments",
+		path:       "/v2/view/{view_id}/comment",
+		schemaFunc: datasource_chat_view_comments.ChatViewCommentsDataSourceSchema,
+	}
+}
+func newCustomItemsDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "custom_items",
+		path:       "/v2/team/{team_id}/custom_item",
+		schemaFunc: datasource_custom_items.CustomItemsDataSourceSchema,
+	}
+}
+func newCustomRolesDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "custom_roles",
+		path:       "/v2/team/{team_id}/customroles",
+		schemaFunc: datasource_custom_roles.CustomRolesDataSourceSchema,
+	}
+}
+func newFilteredTeamTasksDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "filtered_team_tasks",
+		path:       "/v2/team/{team_Id}/task",
+		schemaFunc: datasource_filtered_team_tasks.FilteredTeamTasksDataSourceSchema,
+	}
+}
+func newFolderAvailableFieldsDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "folder_available_fields",
+		path:       "/v2/folder/{folder_id}/field",
+		schemaFunc: datasource_folder_available_fields.FolderAvailableFieldsDataSourceSchema,
+	}
+}
+func newFolderTemplatesDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "folder_templates",
+		path:       "/v2/team/{team_id}/folder_template",
+		schemaFunc: datasource_folder_templates.FolderTemplatesDataSourceSchema,
+	}
+}
+func newFolderViewsDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "folder_views",
+		path:       "/v2/folder/{folder_id}/view",
+		schemaFunc: datasource_folder_views.FolderViewsDataSourceSchema,
+	}
+}
+func newFolderlessListsDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "folderless_lists",
+		path:       "/v2/space/{space_id}/list",
+		schemaFunc: datasource_folderless_lists.FolderlessListsDataSourceSchema,
+	}
+}
+func newFoldersDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "folders",
+		path:       "/v2/space/{space_id}/folder",
+		schemaFunc: datasource_folders.FoldersDataSourceSchema,
+	}
+}
+func newGoalDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "goal",
+		path:       "/v2/goal/{goal_id}",
+		schemaFunc: datasource_goal.GoalDataSourceSchema,
+	}
+}
+func newGuestDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "guest",
+		path:       "/v2/team/{team_id}/guest/{guest_id}",
+		schemaFunc: datasource_guest.GuestDataSourceSchema,
+	}
+}
+func newListDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "list",
+		path:       "/v2/list/{list_id}",
+		schemaFunc: datasource_list.ListDataSourceSchema,
+	}
+}
+func newListCommentsDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "list_comments",
+		path:       "/v2/list/{list_id}/comment",
+		schemaFunc: datasource_list_comments.ListCommentsDataSourceSchema,
+	}
+}
+func newListMembersDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "list_members",
+		path:       "/v2/list/{list_id}/member",
+		schemaFunc: datasource_list_members.ListMembersDataSourceSchema,
+	}
+}
+func newListTemplatesDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "list_templates",
+		path:       "/v2/team/{team_id}/list_template",
+		schemaFunc: datasource_list_templates.ListTemplatesDataSourceSchema,
+	}
+}
+func newListViewsDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "list_views",
+		path:       "/v2/list/{list_id}/view",
+		schemaFunc: datasource_list_views.ListViewsDataSourceSchema,
+	}
+}
+func newListsDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "lists",
+		path:       "/v2/folder/{folder_id}/list",
+		schemaFunc: datasource_lists.ListsDataSourceSchema,
+	}
+}
+func newRunningtimeentryDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "runningtimeentry",
+		path:       "/v2/team/{team_id}/time_entries/current",
+		schemaFunc: datasource_runningtimeentry.RunningtimeentryDataSourceSchema,
+	}
+}
+func newSharedHierarchyDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "shared_hierarchy",
+		path:       "/v2/team/{team_id}/shared",
+		schemaFunc: datasource_shared_hierarchy.SharedHierarchyDataSourceSchema,
+	}
+}
+func newSingulartimeentryDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "singulartimeentry",
+		path:       "/v2/team/{team_id}/time_entries/{timer_id}",
+		schemaFunc: datasource_singulartimeentry.SingulartimeentryDataSourceSchema,
+	}
+}
+func newSpaceDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "space",
+		path:       "/v2/space/{space_id}",
+		schemaFunc: datasource_space.SpaceDataSourceSchema,
+	}
+}
+func newSpaceAvailableFieldsDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "space_available_fields",
+		path:       "/v2/space/{space_id}/field",
+		schemaFunc: datasource_space_available_fields.SpaceAvailableFieldsDataSourceSchema,
+	}
+}
+func newSpaceTagsDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "space_tags",
+		path:       "/v2/space/{space_id}/tag",
+		schemaFunc: datasource_space_tags.SpaceTagsDataSourceSchema,
+	}
+}
+func newSpaceViewsDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "space_views",
+		path:       "/v2/space/{space_id}/view",
+		schemaFunc: datasource_space_views.SpaceViewsDataSourceSchema,
+	}
+}
+func newSpacesDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "spaces",
+		path:       "/v2/team/{team_id}/space",
+		schemaFunc: datasource_spaces.SpacesDataSourceSchema,
+	}
+}
+func newTaskCommentsDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "task_comments",
+		path:       "/v2/task/{task_id}/comment",
+		schemaFunc: datasource_task_comments.TaskCommentsDataSourceSchema,
+	}
+}
+func newTaskMembersDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "task_members",
+		path:       "/v2/task/{task_id}/member",
+		schemaFunc: datasource_task_members.TaskMembersDataSourceSchema,
+	}
+}
+func newTaskTemplatesDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "task_templates",
+		path:       "/v2/team/{team_id}/taskTemplate",
+		schemaFunc: datasource_task_templates.TaskTemplatesDataSourceSchema,
+	}
+}
+func newTasksDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "tasks",
+		path:       "/v2/list/{list_id}/task",
+		schemaFunc: datasource_tasks.TasksDataSourceSchema,
+	}
+}
+func newTeamAvailableFieldsDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "team_available_fields",
+		path:       "/v2/team/{team_id}/field",
+		schemaFunc: datasource_team_available_fields.TeamAvailableFieldsDataSourceSchema,
+	}
+}
+func newTeamViewsDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "team_views",
+		path:       "/v2/team/{team_id}/view",
+		schemaFunc: datasource_team_views.TeamViewsDataSourceSchema,
+	}
+}
+func newTeams1DataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "teams1",
+		path:       "/v2/group",
+		schemaFunc: datasource_teams1.Teams1DataSourceSchema,
+	}
+}
+func newThreadedCommentsDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "threaded_comments",
+		path:       "/v2/comment/{comment_id}/reply",
+		schemaFunc: datasource_threaded_comments.ThreadedCommentsDataSourceSchema,
+	}
+}
+func newTimeentryhistoryDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "timeentryhistory",
+		path:       "/v2/team/{team_id}/time_entries/{timer_id}/history",
+		schemaFunc: datasource_timeentryhistory.TimeentryhistoryDataSourceSchema,
+	}
+}
+func newTrackedtimeDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "trackedtime",
+		path:       "/v2/task/{task_id}/time",
+		schemaFunc: datasource_trackedtime.TrackedtimeDataSourceSchema,
+	}
+}
+func newUserDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "user",
+		path:       "/v2/team/{team_id}/user/{user_id}",
+		schemaFunc: datasource_user.UserDataSourceSchema,
+	}
+}
+func newWebhooksDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "webhooks",
+		path:       "/v2/team/{team_id}/webhook",
+		schemaFunc: datasource_webhooks.WebhooksDataSourceSchema,
+	}
+}
+func newWorkspaceplanDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "workspaceplan",
+		path:       "/v2/team/{team_id}/plan",
+		schemaFunc: datasource_workspaceplan.WorkspaceplanDataSourceSchema,
+	}
+}
+func newWorkspaceseatsDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "workspaceseats",
+		path:       "/v2/team/{team_id}/seats",
+		schemaFunc: datasource_workspaceseats.WorkspaceseatsDataSourceSchema,
+	}
+}
