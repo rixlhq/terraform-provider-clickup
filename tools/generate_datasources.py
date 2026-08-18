@@ -22,6 +22,8 @@ def main() -> None:
 
     for name in sorted(data_sources):
         pkg = f"datasource_{name}"
+        if not Path(f"internal/provider/generated/{pkg}").exists():
+            continue
         camel = snake_to_camel(name)
         schema_func = f"{camel}DataSourceSchema"
         path = data_sources[name]["read"]["path"]

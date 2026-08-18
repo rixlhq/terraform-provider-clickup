@@ -63,7 +63,7 @@ func tfObjectToJSON(ctx context.Context, v tftypes.Value) (any, error) {
 		if converted == nil {
 			continue
 		}
-		out[SnakeToCamel(k)] = converted
+		out[k] = converted
 	}
 	return out, nil
 }

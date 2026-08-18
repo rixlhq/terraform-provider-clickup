@@ -46,13 +46,13 @@ run = "golangci-lint run ./..."
 [tasks.generate]
 description = "Generate provider code from the ClickUp OpenAPI spec"
 run = [
-  "python3 tools/prepare_openapi_spec.py ClickUp_PUBLIC_API_V3.yaml ClickUp_PUBLIC_API_V3.prepared.json",
+  "python3 tools/prepare_openapi_spec.py ClickUp_PUBLIC_API_V2.json ClickUp_PUBLIC_API_V2.prepared.json",
   "python3 tools/generate_data_sources.py",
-  "tfplugingen-openapi generate --config generator_config.yml --output provider_code_spec.json ClickUp_PUBLIC_API_V3.prepared.json",
+  "tfplugingen-openapi generate --config generator_config.yml --output provider_code_spec.json ClickUp_PUBLIC_API_V2.prepared.json",
   "tfplugingen-framework generate all --input provider_code_spec.json --output internal/provider/generated",
   "python3 tools/generate_datasources.py",
-  "python3 tools/deduplicate_generated_page.py",
-  "gofmt -w internal/provider/datasources.go internal/provider/generated/datasource_page/page_data_source_gen.go",
+  "python3 tools/generate_resources.py",
+  "gofmt -w .",
 ]
 
 [tasks.docs]

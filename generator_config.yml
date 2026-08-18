@@ -3,129 +3,449 @@
     "name": "clickup"
   },
   "data_sources": {
-    "chat_channels": {
+    "authorized_user": {
       "read": {
-        "path": "/api/v3/workspaces/{workspace_id}/chat/channels",
-        "method": "get"
-      },
-      "schema": {
-        "ignores": [
-          "channel_types"
-        ]
-      }
-    },
-    "chat_channel": {
-      "read": {
-        "path": "/api/v3/workspaces/{workspace_id}/chat/channels/{channel_id}",
+        "path": "/v2/user",
         "method": "get"
       },
       "schema": {}
     },
-    "chat_channel_followers": {
+    "authorized_teams": {
       "read": {
-        "path": "/api/v3/workspaces/{workspace_id}/chat/channels/{channel_id}/followers",
+        "path": "/v2/team",
         "method": "get"
       },
       "schema": {}
     },
-    "chat_channel_members": {
+    "task_comments": {
       "read": {
-        "path": "/api/v3/workspaces/{workspace_id}/chat/channels/{channel_id}/members",
+        "path": "/v2/task/{task_id}/comment",
         "method": "get"
       },
       "schema": {}
     },
-    "chat_messages": {
+    "chat_view_comments": {
       "read": {
-        "path": "/api/v3/workspaces/{workspace_id}/chat/channels/{channel_id}/messages",
+        "path": "/v2/view/{view_id}/comment",
         "method": "get"
       },
       "schema": {}
     },
-    "chat_message_reactions": {
+    "list_comments": {
       "read": {
-        "path": "/api/v3/workspaces/{workspace_id}/chat/messages/{message_id}/reactions",
+        "path": "/v2/list/{list_id}/comment",
         "method": "get"
       },
       "schema": {}
     },
-    "chat_message_replies": {
+    "threaded_comments": {
       "read": {
-        "path": "/api/v3/workspaces/{workspace_id}/chat/messages/{message_id}/replies",
+        "path": "/v2/comment/{comment_id}/reply",
         "method": "get"
       },
       "schema": {}
     },
-    "chat_message_tagged_users": {
+    "accessible_custom_fields": {
       "read": {
-        "path": "/api/v3/workspaces/{workspace_id}/chat/messages/{message_id}/tagged_users",
+        "path": "/v2/list/{list_id}/field",
         "method": "get"
       },
       "schema": {}
     },
-    "parent_entity_attachments": {
+    "folder_available_fields": {
       "read": {
-        "path": "/api/v3/workspaces/{workspace_id}/{entity_type}/{entity_id}/attachments",
+        "path": "/v2/folder/{folder_id}/field",
         "method": "get"
       },
       "schema": {}
     },
-    "docs": {
+    "space_available_fields": {
       "read": {
-        "path": "/api/v3/workspaces/{workspace_id}/docs",
-        "method": "get"
-      },
-      "schema": {
-        "ignores": [
-          "next_cursor"
-        ]
-      }
-    },
-    "doc": {
-      "read": {
-        "path": "/api/v3/workspaces/{workspace_id}/docs/{doc_id}",
+        "path": "/v2/space/{space_id}/field",
         "method": "get"
       },
       "schema": {}
     },
-    "doc_page_listing": {
+    "team_available_fields": {
       "read": {
-        "path": "/api/v3/workspaces/{workspace_id}/docs/{doc_id}/page_listing",
+        "path": "/v2/team/{team_id}/field",
         "method": "get"
       },
       "schema": {}
     },
-    "doc_pages": {
+    "folders": {
       "read": {
-        "path": "/api/v3/workspaces/{workspace_id}/docs/{doc_id}/pages",
+        "path": "/v2/space/{space_id}/folder",
         "method": "get"
       },
       "schema": {}
     },
-    "page": {
+    "folder": {
       "read": {
-        "path": "/api/v3/workspaces/{workspace_id}/docs/{doc_id}/pages/{page_id}",
+        "path": "/v2/folder/{folder_id}",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "goals": {
+      "read": {
+        "path": "/v2/team/{team_id}/goal",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "goal": {
+      "read": {
+        "path": "/v2/goal/{goal_id}",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "guest": {
+      "read": {
+        "path": "/v2/team/{team_id}/guest/{guest_id}",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "lists": {
+      "read": {
+        "path": "/v2/folder/{folder_id}/list",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "folderless_lists": {
+      "read": {
+        "path": "/v2/space/{space_id}/list",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "list": {
+      "read": {
+        "path": "/v2/list/{list_id}",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "task_members": {
+      "read": {
+        "path": "/v2/task/{task_id}/member",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "list_members": {
+      "read": {
+        "path": "/v2/list/{list_id}/member",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "custom_roles": {
+      "read": {
+        "path": "/v2/team/{team_id}/customroles",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "shared_hierarchy": {
+      "read": {
+        "path": "/v2/team/{team_id}/shared",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "spaces": {
+      "read": {
+        "path": "/v2/team/{team_id}/space",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "space": {
+      "read": {
+        "path": "/v2/space/{space_id}",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "space_tags": {
+      "read": {
+        "path": "/v2/space/{space_id}/tag",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "tasks": {
+      "read": {
+        "path": "/v2/list/{list_id}/task",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "task": {
+      "read": {
+        "path": "/v2/task/{task_id}",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "filtered_team_tasks": {
+      "read": {
+        "path": "/v2/team/{team_Id}/task",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "task_s_timein_status": {
+      "read": {
+        "path": "/v2/task/{task_id}/time_in_status",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "bulk_tasks_timein_status": {
+      "read": {
+        "path": "/v2/task/bulk_time_in_status/task_ids",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "task_templates": {
+      "read": {
+        "path": "/v2/team/{team_id}/taskTemplate",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "list_templates": {
+      "read": {
+        "path": "/v2/team/{team_id}/list_template",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "folder_templates": {
+      "read": {
+        "path": "/v2/team/{team_id}/folder_template",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "workspaceseats": {
+      "read": {
+        "path": "/v2/team/{team_id}/seats",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "workspaceplan": {
+      "read": {
+        "path": "/v2/team/{team_id}/plan",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "custom_items": {
+      "read": {
+        "path": "/v2/team/{team_id}/custom_item",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "teams1": {
+      "read": {
+        "path": "/v2/group",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "trackedtime": {
+      "read": {
+        "path": "/v2/task/{task_id}/time",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "singulartimeentry": {
+      "read": {
+        "path": "/v2/team/{team_id}/time_entries/{timer_id}",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "timeentryhistory": {
+      "read": {
+        "path": "/v2/team/{team_id}/time_entries/{timer_id}/history",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "runningtimeentry": {
+      "read": {
+        "path": "/v2/team/{team_id}/time_entries/current",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "alltagsfromtimeentries": {
+      "read": {
+        "path": "/v2/team/{team_id}/time_entries/tags",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "user": {
+      "read": {
+        "path": "/v2/team/{team_id}/user/{user_id}",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "team_views": {
+      "read": {
+        "path": "/v2/team/{team_id}/view",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "space_views": {
+      "read": {
+        "path": "/v2/space/{space_id}/view",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "folder_views": {
+      "read": {
+        "path": "/v2/folder/{folder_id}/view",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "list_views": {
+      "read": {
+        "path": "/v2/list/{list_id}/view",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "view": {
+      "read": {
+        "path": "/v2/view/{view_id}",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "view_tasks": {
+      "read": {
+        "path": "/v2/view/{view_id}/task",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "webhooks": {
+      "read": {
+        "path": "/v2/team/{team_id}/webhook",
         "method": "get"
       },
       "schema": {}
     }
   },
   "resources": {
-    "chat_channel": {
+    "folder": {
       "create": {
-        "path": "/api/v3/workspaces/{workspace_id}/chat/channels",
+        "path": "/v2/space/{space_id}/folder",
         "method": "post"
       },
       "read": {
-        "path": "/api/v3/workspaces/{workspace_id}/chat/channels/{channel_id}",
+        "path": "/v2/folder/{folder_id}",
         "method": "get"
       },
       "update": {
-        "path": "/api/v3/workspaces/{workspace_id}/chat/channels/{channel_id}",
-        "method": "patch"
+        "path": "/v2/folder/{folder_id}",
+        "method": "put"
       },
       "delete": {
-        "path": "/api/v3/workspaces/{workspace_id}/chat/channels/{channel_id}",
+        "path": "/v2/folder/{folder_id}",
+        "method": "delete"
+      },
+      "schema": {}
+    },
+    "goal": {
+      "create": {
+        "path": "/v2/team/{team_id}/goal",
+        "method": "post"
+      },
+      "read": {
+        "path": "/v2/goal/{goal_id}",
+        "method": "get"
+      },
+      "update": {
+        "path": "/v2/goal/{goal_id}",
+        "method": "put"
+      },
+      "delete": {
+        "path": "/v2/goal/{goal_id}",
+        "method": "delete"
+      },
+      "schema": {}
+    },
+    "list": {
+      "create": {
+        "path": "/v2/folder/{folder_id}/list",
+        "method": "post"
+      },
+      "read": {
+        "path": "/v2/list/{list_id}",
+        "method": "get"
+      },
+      "update": {
+        "path": "/v2/list/{list_id}",
+        "method": "put"
+      },
+      "delete": {
+        "path": "/v2/list/{list_id}",
+        "method": "delete"
+      },
+      "schema": {}
+    },
+    "space": {
+      "create": {
+        "path": "/v2/team/{team_id}/space",
+        "method": "post"
+      },
+      "read": {
+        "path": "/v2/space/{space_id}",
+        "method": "get"
+      },
+      "update": {
+        "path": "/v2/space/{space_id}",
+        "method": "put"
+      },
+      "delete": {
+        "path": "/v2/space/{space_id}",
+        "method": "delete"
+      },
+      "schema": {}
+    },
+    "task": {
+      "create": {
+        "path": "/v2/list/{list_id}/task",
+        "method": "post"
+      },
+      "read": {
+        "path": "/v2/task/{task_id}",
+        "method": "get"
+      },
+      "update": {
+        "path": "/v2/task/{task_id}",
+        "method": "put"
+      },
+      "delete": {
+        "path": "/v2/task/{task_id}",
         "method": "delete"
       },
       "schema": {}
