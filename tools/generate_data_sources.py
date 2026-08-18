@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+"""Generate generator_config.yml and data source Go wrappers for ClickUp GET endpoints."""
+
+import json
+import re
+from pathlib import Path
+
+SPEC_PATH = Path("ClickUp_PUBLIC_API_V3.prepared.json")
+CONFIG_PATH = Path("generator_config.yml")
+
+
+def camel_to_snake(name: str) -> str:
+    name = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", name)
+    return re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", name).lower()
+
+
+def data_source_name(operation_id: str) -> str:
+    # Strip common read prefixes, then snake-case.
+    cleaned = re.sub(r"^(get|search)", "", operation_id)
+    cleaned = camel_to_snake(cleaned)
+    cleaned = cleaned.strip("_")
+    # Remove trailing "public" to keep names short.
+    cleaned = re.sub(r"_public$", "", cleaned)
+    return cleaned
+
+
+def main() -> None:
+    spec = json.loads(SPEC_PATH.read_text())
+
+    config = {"provider": {"name": "clickup"}, "data_sources": {}}
+
+    for path, item in spec["paths"].items():
+        for method, op in item.items():
+            if method != "get":
+                continue
+            op_id = op.get("operationId")
+            if not op_id:
+                continue
+
+            # Skip endpoints with no response schema (e.g. comments/types/subtypes).
+            resp = op.get("responses", {}).get("200", {}).get("content", {}).get("application/json", {})
+            if not resp.get("schema"):
+                continue
+
+            name = data_source_name(op_id)
+
+            query_ignores = []
+            for par in op.get("parameters", []):
+                if par.get("in") != "query":
+                    continue
+                if par["name"] in ("next_cursor", "channel_types"):
+                    query_ignores.append(par["name"])
+
+            schema = {}
+            if query_ignores:
+                schema["ignores"] = query_ignores
+
+            config["data_sources"][name] = {
+                "read": {"path": path, "method": "get"},
+                "schema": schema if schema else {},
+            }
+
+    # Write as JSON because the YAML parser accepts JSON and PyYAML may not be installed.
+    CONFIG_PATH.write_text(json.dumps(config, indent=2))
+    print(f"wrote {CONFIG_PATH}")
+
+
+if __name__ == "__main__":
+    main()

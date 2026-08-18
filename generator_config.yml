@@ -1,0 +1,113 @@
+{
+  "provider": {
+    "name": "clickup"
+  },
+  "data_sources": {
+    "chat_channels": {
+      "read": {
+        "path": "/api/v3/workspaces/{workspace_id}/chat/channels",
+        "method": "get"
+      },
+      "schema": {
+        "ignores": [
+          "channel_types"
+        ]
+      }
+    },
+    "chat_channel": {
+      "read": {
+        "path": "/api/v3/workspaces/{workspace_id}/chat/channels/{channel_id}",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "chat_channel_followers": {
+      "read": {
+        "path": "/api/v3/workspaces/{workspace_id}/chat/channels/{channel_id}/followers",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "chat_channel_members": {
+      "read": {
+        "path": "/api/v3/workspaces/{workspace_id}/chat/channels/{channel_id}/members",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "chat_messages": {
+      "read": {
+        "path": "/api/v3/workspaces/{workspace_id}/chat/channels/{channel_id}/messages",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "chat_message_reactions": {
+      "read": {
+        "path": "/api/v3/workspaces/{workspace_id}/chat/messages/{message_id}/reactions",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "chat_message_replies": {
+      "read": {
+        "path": "/api/v3/workspaces/{workspace_id}/chat/messages/{message_id}/replies",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "chat_message_tagged_users": {
+      "read": {
+        "path": "/api/v3/workspaces/{workspace_id}/chat/messages/{message_id}/tagged_users",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "parent_entity_attachments": {
+      "read": {
+        "path": "/api/v3/workspaces/{workspace_id}/{entity_type}/{entity_id}/attachments",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "docs": {
+      "read": {
+        "path": "/api/v3/workspaces/{workspace_id}/docs",
+        "method": "get"
+      },
+      "schema": {
+        "ignores": [
+          "next_cursor"
+        ]
+      }
+    },
+    "doc": {
+      "read": {
+        "path": "/api/v3/workspaces/{workspace_id}/docs/{doc_id}",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "doc_page_listing": {
+      "read": {
+        "path": "/api/v3/workspaces/{workspace_id}/docs/{doc_id}/page_listing",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "doc_pages": {
+      "read": {
+        "path": "/api/v3/workspaces/{workspace_id}/docs/{doc_id}/pages",
+        "method": "get"
+      },
+      "schema": {}
+    },
+    "page": {
+      "read": {
+        "path": "/api/v3/workspaces/{workspace_id}/docs/{doc_id}/pages/{page_id}",
+        "method": "get"
+      },
+      "schema": {}
+    }
+  }
+}
