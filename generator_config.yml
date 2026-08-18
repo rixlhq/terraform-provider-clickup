@@ -109,5 +109,26 @@
       },
       "schema": {}
     }
+  },
+  "resources": {
+    "chat_channel": {
+      "create": {
+        "path": "/api/v3/workspaces/{workspace_id}/chat/channels",
+        "method": "post"
+      },
+      "read": {
+        "path": "/api/v3/workspaces/{workspace_id}/chat/channels/{channel_id}",
+        "method": "get"
+      },
+      "update": {
+        "path": "/api/v3/workspaces/{workspace_id}/chat/channels/{channel_id}",
+        "method": "patch"
+      },
+      "delete": {
+        "path": "/api/v3/workspaces/{workspace_id}/chat/channels/{channel_id}",
+        "method": "delete"
+      },
+      "schema": {}
+    }
   }
 }
