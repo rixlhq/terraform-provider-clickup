@@ -232,6 +232,12 @@ HAND_WRITTEN_RESOURCES = {"folder"}
 READ_TRANSFORM_OVERRIDES = {
     "list": {"assignee": "objectFieldToString"},
     "folderless_list": {"assignee": "objectFieldToString"},
+    "goal": {"owners": "userObjectsToIntList"},
+}
+
+# Resources whose GET response wraps the object under a named key.
+READ_RESPONSE_ROOT_OVERRIDES = {
+    "goal": "goal",
 }
 
 
@@ -392,7 +398,7 @@ def main() -> None:
             read_list_root="",
             read_list_id_field="",
             create_response_root="",
-            read_response_root="",
+            read_response_root=READ_RESPONSE_ROOT_OVERRIDES.get(name, ""),
             id_from_body=[],
             schema_func=f"resource_{name}.{snake_to_pascal(name)}ResourceSchema",
         )
