@@ -91,7 +91,7 @@ func envOrString(v types.String, env string) types.String {
 }
 
 func (p *ClickUpProvider) Resources(ctx context.Context) []func() resource.Resource {
-	return []func() resource.Resource{}
+	return resourceFactories
 }
 
 func (p *ClickUpProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
