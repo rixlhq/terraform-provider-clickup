@@ -2,6 +2,8 @@
 package provider
 
 import (
+	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
@@ -51,5 +53,30 @@ func TestMergeTfValuesAllNullList(t *testing.T) {
 	}
 	if s != "x" {
 		t.Fatalf("expected x, got %s", s)
+	}
+}
+
+func TestUserObjectsToIntList(t *testing.T) {
+	got := userObjectsToIntList([]any{
+		map[string]any{"id": json.Number("1"), "name": "Alice"},
+		map[string]any{"user_id": json.Number("2"), "name": "Bob"},
+		"3",
+	})
+	want := []any{json.Number("1"), json.Number("2"), "3"}
+	if len(got.([]any)) != len(want) {
+		t.Fatalf("expected %v, got %v", want, got)
+	}
+	for i := range want {
+		if fmt.Sprint(got.([]any)[i]) != fmt.Sprint(want[i]) {
+			t.Fatalf("at %d: expected %v, got %v", i, want[i], got.([]any)[i])
+		}
+	}
+}
+
+func TestUserObjectsToIntListNumeric(t *testing.T) {
+	got := userObjectsToIntList([]any{json.Number("42"), "43"})
+	want := []any{json.Number("42"), "43"}
+	if len(got.([]any)) != len(want) {
+		t.Fatalf("expected %v, got %v", want, got)
 	}
 }
