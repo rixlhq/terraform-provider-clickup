@@ -1,8 +1,10 @@
+//nolint:goconst // Terraform attribute/path strings repeated in schemas, maps, and tests.
 package provider
 
 import (
 	"context"
 	"fmt"
+	"net/url"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -91,7 +93,7 @@ func (r *folderResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	path := "/v2/space/" + data.SpaceId.ValueString() + "/folder"
+	path := "/v2/space/" + url.PathEscape(data.SpaceId.ValueString()) + "/folder"
 	raw, err := r.client.Post(ctx, path, body)
 	if err != nil {
 		resp.Diagnostics.AddError("ClickUp API Error", err.Error())
@@ -118,14 +120,25 @@ func (r *folderResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
+	if data.FolderId.IsNull() {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *folderResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data folderResourceModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	var stateData, planData folderResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &stateData)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planData)...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	data := stateData
+	if !planData.Name.IsUnknown() && !planData.Name.IsNull() {
+		data.Name = planData.Name
 	}
 
 	body, err := r.buildUpdateBody(data)
@@ -134,7 +147,7 @@ func (r *folderResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	path := "/v2/folder/" + data.FolderId.ValueString()
+	path := "/v2/folder/" + url.PathEscape(stateData.FolderId.ValueString())
 	raw, err := r.client.Put(ctx, path, body)
 	if err != nil {
 		resp.Diagnostics.AddError("ClickUp API Error", err.Error())
@@ -156,8 +169,10 @@ func (r *folderResource) Delete(ctx context.Context, req resource.DeleteRequest,
 		return
 	}
 
-	path := "/v2/folder/" + data.FolderId.ValueString()
+	path := "/v2/folder/" + url.PathEscape(data.FolderId.ValueString())
 	if _, err := r.client.Delete(ctx, path); err != nil {
-		resp.Diagnostics.AddError("ClickUp API Error", err.Error())
+		if !clickupclient.IsNotFound(err) {
+			resp.Diagnostics.AddError("ClickUp API Error", err.Error())
+		}
 	}
 }

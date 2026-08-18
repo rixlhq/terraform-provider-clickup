@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -19,25 +20,43 @@ import (
 // full create/read/update/delete cycle. It uses the generated Terraform schema and
 // the API paths configured in generator_config.yml.
 type genericResource struct {
-	client             *clickupclient.Client
-	name               string
-	createPath         string
-	readPath           string
-	updatePath         string
-	deletePath         string
-	updateMethod       string
-	createBodyFields   []string
-	updateBodyFields   []string
-	createBodyDefaults map[string]any
-	updateBodyDefaults map[string]any
-	schemaFunc         func(context.Context) resource_schema.Schema
-	schema             resource_schema.Schema
+	client               *clickupclient.Client
+	name                 string
+	createPath           string
+	readPath             string
+	updatePath           string
+	deletePath           string
+	updateMethod         string
+	createBodyFields     []string
+	updateBodyFields     []string
+	createBodyDefaults   map[string]any
+	updateBodyDefaults   map[string]any
+	createBodyTransforms map[string]func(any) any
+	updateBodyTransforms map[string]func(any) any
+	readTransforms       map[string]func(any) any
+	preReadTransforms    map[string]func(any) any
+	// readQueryParams maps query parameter names to Terraform attribute names
+	// that must be appended to GET requests used by readModel.
+	readQueryParams map[string]string
+	schemaFunc      func(context.Context) resource_schema.Schema
+	schema          resource_schema.Schema
 	// readFromList is set when the API has no single-GET endpoint. The resource
 	// reads the collection at readPath and filters the item whose
 	// readListIDField equals the resource ID.
 	readFromList    bool
 	readListRoot    string
 	readListIDField string
+	// createResponseRoot is the JSON key that wraps the created object in the
+	// response (e.g. "view", "key_result"). Empty means the object is top-level.
+	createResponseRoot string
+	// idFromBody is a path of map keys used to extract the resource ID from
+	// the request body when the API response is empty or does not contain an id.
+	// This is used for both create and update. Example: ["tag", "name"] for space tags.
+	idFromBody []string
+	// readResponseRoot is the JSON key that wraps the read response. When the
+	// response is a list item it is wrapped *under* this root. When the response
+	// is a single-GET that already contains this root, the root is unwrapped.
+	readResponseRoot string
 	// idField is the Terraform attribute name that holds the resource ID. When
 	// empty it is derived from the first path parameter of updatePath/deletePath
 	// or readPath.
@@ -50,9 +69,9 @@ func (r *genericResource) Metadata(_ context.Context, req resource.MetadataReque
 
 func (r *genericResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	r.schema = r.schemaFunc(ctx)
+	r.schema = r.addMissingPathParamAttributes()
 	resp.Schema = r.schema
 }
-
 func (r *genericResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -78,7 +97,7 @@ func (r *genericResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	body, diags := r.buildBody(ctx, plan, r.createBodyFields, r.createBodyDefaults)
+	body, diags := r.buildBody(ctx, plan, r.createBodyFields, r.createBodyDefaults, r.createBodyTransforms)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -90,7 +109,7 @@ func (r *genericResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	id, err := r.extractID(raw)
+	id, err := r.resolveResourceID(raw, body)
 	if err != nil {
 		resp.Diagnostics.AddError("Create Response Error", err.Error())
 		return
@@ -124,6 +143,13 @@ func (r *genericResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
+	for _, d := range diags {
+		if d.Severity() == diag.SeverityWarning && d.Summary() == "Not Found" {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+	}
+
 	resp.State.Raw = final
 }
 
@@ -133,21 +159,32 @@ func (r *genericResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	plan := req.Plan.Raw
-	updatePath, diags := r.buildPath(r.updatePath, plan)
+	// Computed id attributes are unknown in the plan for updates. Merge prior
+	// state into the plan so path parameters and identifiers are known, while
+	// keeping any configuration changes from the plan.
+	merged, err := mergeTfValues(req.State.Raw, req.Plan.Raw)
+	if err != nil {
+		resp.Diagnostics.AddError("State Merge Error", err.Error())
+		return
+	}
+
+	updatePath, diags := r.buildPath(r.updatePath, merged)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	body, diags := r.buildBody(ctx, plan, r.updateBodyFields, r.updateBodyDefaults)
+	// Only send update fields that are configured in the plan. Unknown fields
+	// in the plan are omitted from the request body, but known fields are
+	// filled from the merged state+plan value so nested computed values (such
+	// as the "rem" side of an add/rem object) are preserved.
+	body, diags := r.buildUpdateBody(ctx, merged, req.Plan.Raw, r.updateBodyFields, r.updateBodyDefaults, r.updateBodyTransforms)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	var raw []byte
-	var err error
 	if r.updateMethod == "put" {
 		raw, err = r.client.Put(ctx, updatePath, body)
 	} else {
@@ -157,15 +194,22 @@ func (r *genericResource) Update(ctx context.Context, req resource.UpdateRequest
 		resp.Diagnostics.AddError("ClickUp API Error", err.Error())
 		return
 	}
-	_ = raw
 
-	id, diags := r.idFromValue(plan)
+	id, diags := r.idFromValue(merged)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	final, diags := r.readModel(ctx, plan, id)
+	// Some updates (e.g. space tags) change the resource's identifier. Try to
+	// resolve the new ID from the response or request body, then fall back to
+	// the original ID.
+	newID := id
+	if resolved, err := r.resolveResourceID(raw, body); err == nil && resolved != "" {
+		newID = resolved
+	}
+
+	final, diags := r.readModel(ctx, merged, newID)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -188,8 +232,10 @@ func (r *genericResource) Delete(ctx context.Context, req resource.DeleteRequest
 	}
 
 	if _, err := r.client.Delete(ctx, deletePath); err != nil {
-		resp.Diagnostics.AddError("ClickUp API Error", err.Error())
-		return
+		if !clickupclient.IsNotFound(err) {
+			resp.Diagnostics.AddError("ClickUp API Error", err.Error())
+			return
+		}
 	}
 }
 
@@ -209,10 +255,23 @@ func (r *genericResource) readModel(ctx context.Context, base tftypes.Value, id 
 		return tftypes.Value{}, diags
 	}
 
-	jv, d := r.getAndDecode(ctx, readPath, id)
+	query, d := r.queryParams(ctx, baseWithParam)
 	diags.Append(d...)
 	if diags.HasError() {
 		return tftypes.Value{}, diags
+	}
+
+	jv, d := r.getAndDecode(ctx, readPath, id, query)
+	diags.Append(d...)
+	if diags.HasError() {
+		return tftypes.Value{}, diags
+	}
+
+	jv = r.unwrapReadResponse(jv)
+
+	if m, ok := jv.(map[string]any); ok {
+		r.applyTransforms(m, r.preReadTransforms)
+		r.applyTransforms(m, r.readTransforms)
 	}
 
 	tfVal, err := clickupcommon.JSONToTfValue(ctx, r.tfType(ctx), jv)
@@ -221,7 +280,13 @@ func (r *genericResource) readModel(ctx context.Context, base tftypes.Value, id 
 		return tftypes.Value{}, diags
 	}
 
-	final, d := r.withPathParam(ctx, tfVal, param, id)
+	merged, err := mergeTfValues(baseWithParam, tfVal)
+	if err != nil {
+		diags.AddError("State Merge Error", err.Error())
+		return tftypes.Value{}, diags
+	}
+
+	final, d := r.withPathParam(ctx, merged, param, id)
 	diags.Append(d...)
 	if diags.HasError() {
 		return tftypes.Value{}, diags
@@ -230,9 +295,79 @@ func (r *genericResource) readModel(ctx context.Context, base tftypes.Value, id 
 	return final, diags
 }
 
-func (r *genericResource) getAndDecode(ctx context.Context, readPath, id string) (any, diag.Diagnostics) {
+// unwrapReadResponse handles readResponseRoot. For list reads it wraps the item
+// under the root. For single-GET reads it unwraps the item if the response is
+// already wrapped under the root.
+func (r *genericResource) unwrapReadResponse(jv any) any {
+	if r.readResponseRoot == "" {
+		return jv
+	}
+
+	if r.readFromList {
+		return map[string]any{r.readResponseRoot: jv}
+	}
+
+	if m, ok := jv.(map[string]any); ok {
+		if v, ok := m[r.readResponseRoot]; ok {
+			return v
+		}
+	}
+
+	return jv
+}
+
+// applyTransforms runs the configured value transforms on the decoded JSON map.
+func (r *genericResource) applyTransforms(m map[string]any, transforms map[string]func(any) any) {
+	for key, transform := range transforms {
+		if transform == nil {
+			continue
+		}
+		if v, ok := m[key]; ok {
+			m[key] = transform(v)
+		}
+	}
+}
+
+// queryParams extracts the configured query parameters from a Terraform value.
+// It is used for resource read endpoints that require query parameters such as
+// the user group list endpoint, which requires a team_id query.
+func (r *genericResource) queryParams(_ context.Context, v tftypes.Value) (url.Values, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	raw, err := r.client.Get(ctx, readPath, nil)
+	query := url.Values{}
+	if len(r.readQueryParams) == 0 {
+		return query, diags
+	}
+
+	obj, err := asObject(v)
+	if err != nil {
+		diags.AddError("Invalid State", err.Error())
+		return nil, diags
+	}
+
+	for q, attr := range r.readQueryParams {
+		val, ok := obj[attr]
+		if !ok {
+			diags.AddError("Missing Query Parameter", fmt.Sprintf("%q is required", attr))
+			return nil, diags
+		}
+		s, err := valueAsString(val)
+		if err != nil {
+			diags.AddError("Invalid Query Parameter", fmt.Sprintf("%q: %s", attr, err))
+			return nil, diags
+		}
+		if s == "" {
+			diags.AddError("Invalid Query Parameter", fmt.Sprintf("%q must not be empty", attr))
+			return nil, diags
+		}
+		query.Set(q, s)
+	}
+
+	return query, diags
+}
+
+func (r *genericResource) getAndDecode(ctx context.Context, readPath, id string, query url.Values) (any, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	raw, err := r.client.Get(ctx, readPath, query)
 	if err != nil {
 		if clickupclient.IsNotFound(err) {
 			diags.AddWarning("Not Found", fmt.Sprintf("ClickUp API returned 404 for %s %s", r.name, id))
@@ -251,35 +386,15 @@ func (r *genericResource) getAndDecode(ctx context.Context, readPath, id string)
 	if r.readFromList {
 		jv, err = r.findInList(jv, id)
 		if err != nil {
+			var notFound *notFoundError
+			if errors.As(err, &notFound) {
+				diags.AddWarning("Not Found", err.Error())
+				return nil, diags
+			}
 			diags.AddError("Read Error", err.Error())
 			return nil, diags
 		}
 	}
 
 	return jv, diags
-}
-
-func (r *genericResource) findInList(jv any, id string) (any, error) {
-	root, ok := jv.(map[string]any)
-	if !ok {
-		return nil, errors.New("list response is not a JSON object")
-	}
-	items, ok := root[r.readListRoot].([]any)
-	if !ok {
-		return nil, fmt.Errorf("list response did not contain %q array", r.readListRoot)
-	}
-	for _, item := range items {
-		obj, ok := item.(map[string]any)
-		if !ok {
-			continue
-		}
-		v, ok := obj[r.readListIDField]
-		if !ok {
-			continue
-		}
-		if valueToIDString(v) == id {
-			return item, nil
-		}
-	}
-	return nil, fmt.Errorf("%s with %s=%q not found in list", r.name, r.readListIDField, id)
 }

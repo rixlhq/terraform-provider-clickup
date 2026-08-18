@@ -23,8 +23,10 @@ func newListCommentResource() resource.Resource {
 		createBodyFields: []string{"comment_text", "assignee", "notify_all"},
 		updateBodyFields: []string{"comment_text", "resolved"},
 		createBodyDefaults: map[string]any{
-			"assignee":   0,
 			"notify_all": false,
+		},
+		readTransforms: map[string]func(any) any{
+			"assignee": objectFieldToInt,
 		},
 		schemaFunc: listCommentSchema,
 	}
@@ -40,6 +42,14 @@ func listCommentSchema(_ context.Context) schema.Schema {
 				Required: true,
 			},
 			"comment_text": schema.StringAttribute{
+				Optional: true,
+				Computed: true,
+			},
+			"assignee": schema.Int64Attribute{
+				Optional: true,
+				Computed: true,
+			},
+			"notify_all": schema.BoolAttribute{
 				Optional: true,
 				Computed: true,
 			},

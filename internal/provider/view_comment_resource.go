@@ -42,6 +42,10 @@ func viewCommentSchema(_ context.Context) schema.Schema {
 				Optional: true,
 				Computed: true,
 			},
+			"notify_all": schema.BoolAttribute{
+				Optional: true,
+				Computed: true,
+			},
 			"resolved": schema.BoolAttribute{
 				Optional: true,
 				Computed: true,

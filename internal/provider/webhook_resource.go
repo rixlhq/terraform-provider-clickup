@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -25,9 +26,9 @@ type webhookResourceModel struct {
 	Endpoint  types.String `tfsdk:"endpoint"`
 	Events    types.List   `tfsdk:"events"`
 	Status    types.String `tfsdk:"status"`
-	SpaceId   types.Int64  `tfsdk:"space_id"`
-	FolderId  types.Int64  `tfsdk:"folder_id"`
-	ListId    types.Int64  `tfsdk:"list_id"`
+	SpaceId   types.String `tfsdk:"space_id"`
+	FolderId  types.String `tfsdk:"folder_id"`
+	ListId    types.String `tfsdk:"list_id"`
 	TaskId    types.String `tfsdk:"task_id"`
 	ClientId  types.String `tfsdk:"client_id"`
 	Health    types.String `tfsdk:"health"`
@@ -43,6 +44,7 @@ func (r *webhookResource) Metadata(_ context.Context, req resource.MetadataReque
 	resp.TypeName = req.ProviderTypeName + "_webhook"
 }
 
+//nolint:goconst // repeated Terraform attribute names are intentional
 func (r *webhookResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
@@ -63,13 +65,13 @@ func (r *webhookResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				Optional: true,
 				Computed: true,
 			},
-			"space_id": schema.Int64Attribute{
+			"space_id": schema.StringAttribute{
 				Optional: true,
 			},
-			"folder_id": schema.Int64Attribute{
+			"folder_id": schema.StringAttribute{
 				Optional: true,
 			},
-			"list_id": schema.Int64Attribute{
+			"list_id": schema.StringAttribute{
 				Optional: true,
 			},
 			"task_id": schema.StringAttribute{
@@ -151,14 +153,33 @@ func (r *webhookResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
+	if data.WebhookId.IsNull() {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *webhookResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data webhookResourceModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	var stateData, planData webhookResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &stateData)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &planData)...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	// Start from the prior state so the computed webhook_id used in the path is
+	// known, then overlay any values the practitioner changed in the plan.
+	data := stateData
+	if !planData.Endpoint.IsUnknown() {
+		data.Endpoint = planData.Endpoint
+	}
+	if !planData.Events.IsUnknown() {
+		data.Events = planData.Events
+	}
+	if !planData.Status.IsUnknown() {
+		data.Status = planData.Status
 	}
 
 	body, err := r.buildUpdateBody(ctx, data)
@@ -167,7 +188,7 @@ func (r *webhookResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	path := "/v2/webhook/" + data.WebhookId.ValueString()
+	path := "/v2/webhook/" + url.PathEscape(stateData.WebhookId.ValueString())
 	if _, err := r.client.Put(ctx, path, body); err != nil {
 		resp.Diagnostics.AddError("ClickUp API Error", err.Error())
 		return
@@ -188,8 +209,10 @@ func (r *webhookResource) Delete(ctx context.Context, req resource.DeleteRequest
 		return
 	}
 
-	path := "/v2/webhook/" + data.WebhookId.ValueString()
+	path := "/v2/webhook/" + url.PathEscape(data.WebhookId.ValueString())
 	if _, err := r.client.Delete(ctx, path); err != nil {
-		resp.Diagnostics.AddError("ClickUp API Error", err.Error())
+		if !clickupclient.IsNotFound(err) {
+			resp.Diagnostics.AddError("ClickUp API Error", err.Error())
+		}
 	}
 }

@@ -15,21 +15,32 @@ func jsonToTfValue(ctx context.Context, t tftypes.Type, v any) (tftypes.Value, e
 	}
 
 	if t.Is(tftypes.String) {
-		return tftypes.NewValue(tftypes.String, toString(v)), nil
+		s, ok := toString(v)
+		if !ok {
+			return tftypes.Value{}, fmt.Errorf("cannot convert %T to string", v)
+		}
+		return tftypes.NewValue(tftypes.String, s), nil
 	}
 	if t.Is(tftypes.Number) {
-		n, err := toBigFloat(v)
-		if err != nil {
-			return tftypes.Value{}, err
+		n, ok := toBigFloat(v)
+		if !ok {
+			return tftypes.Value{}, fmt.Errorf("cannot convert %T to number", v)
 		}
 		return tftypes.NewValue(tftypes.Number, n), nil
 	}
 	if t.Is(tftypes.Bool) {
-		b, ok := v.(bool)
-		if !ok {
-			return tftypes.Value{}, fmt.Errorf("expected bool, got %T", v)
+		switch b := v.(type) {
+		case bool:
+			return tftypes.NewValue(tftypes.Bool, b), nil
+		case string:
+			if b == "true" || b == "1" {
+				return tftypes.NewValue(tftypes.Bool, true), nil
+			}
+			if b == "false" || b == "0" {
+				return tftypes.NewValue(tftypes.Bool, false), nil
+			}
 		}
-		return tftypes.NewValue(tftypes.Bool, b), nil
+		return tftypes.Value{}, fmt.Errorf("cannot convert %T to bool", v)
 	}
 	if t.Is(tftypes.DynamicPseudoType) {
 		return dynamicjsonToTfValue(v)
@@ -54,10 +65,10 @@ func jsonToTfValue(ctx context.Context, t tftypes.Type, v any) (tftypes.Value, e
 func jsonToTfObject(ctx context.Context, t tftypes.Type, ty tftypes.Object, v any) (tftypes.Value, error) {
 	m, ok := v.(map[string]any)
 	if !ok {
-		return tftypes.Value{}, fmt.Errorf("expected object for type %s, got %T", t, v)
+		return tftypes.NewValue(t, nil), nil
 	}
 	// The generated Terraform schemas use snake_case attribute names, while
-	// the SCP API returns camelCase keys. Build a lookup that preserves the
+	// the ClickUp API returns camelCase keys. Build a lookup that preserves the
 	// original values (including map keys) but normalizes only this object's
 	// attribute names.
 	normalized := make(map[string]any, len(m))
@@ -83,7 +94,7 @@ func jsonToTfObject(ctx context.Context, t tftypes.Type, ty tftypes.Object, v an
 func jsonToTfList(ctx context.Context, t tftypes.Type, elemType tftypes.Type, v any) (tftypes.Value, error) {
 	s, ok := v.([]any)
 	if !ok {
-		return tftypes.Value{}, fmt.Errorf("expected list for type %s, got %T", t, v)
+		return tftypes.NewValue(t, nil), nil
 	}
 	vals := make([]tftypes.Value, 0, len(s))
 	for _, elem := range s {
@@ -99,7 +110,7 @@ func jsonToTfList(ctx context.Context, t tftypes.Type, elemType tftypes.Type, v 
 func jsonToTfMap(ctx context.Context, t tftypes.Type, ty tftypes.Map, v any) (tftypes.Value, error) {
 	m, ok := v.(map[string]any)
 	if !ok {
-		return tftypes.Value{}, fmt.Errorf("expected map for type %s, got %T", t, v)
+		return tftypes.NewValue(t, nil), nil
 	}
 	vals := make(map[string]tftypes.Value, len(m))
 	for k, elem := range m {
@@ -114,11 +125,8 @@ func jsonToTfMap(ctx context.Context, t tftypes.Type, ty tftypes.Map, v any) (tf
 
 func jsonToTfTuple(ctx context.Context, t tftypes.Type, ty tftypes.Tuple, v any) (tftypes.Value, error) {
 	s, ok := v.([]any)
-	if !ok {
-		return tftypes.Value{}, fmt.Errorf("expected tuple for type %s, got %T", t, v)
-	}
-	if len(s) != len(ty.ElementTypes) {
-		return tftypes.Value{}, fmt.Errorf("expected tuple of length %d, got %d", len(ty.ElementTypes), len(s))
+	if !ok || len(s) != len(ty.ElementTypes) {
+		return tftypes.NewValue(t, nil), nil
 	}
 	vals := make([]tftypes.Value, 0, len(s))
 	for i, elem := range s {
@@ -131,41 +139,43 @@ func jsonToTfTuple(ctx context.Context, t tftypes.Type, ty tftypes.Tuple, v any)
 	return tftypes.NewValue(t, vals), nil
 }
 
-func toString(v any) string {
+func toString(v any) (string, bool) {
 	switch val := v.(type) {
 	case string:
-		return val
+		return val, true
 	case json.Number:
-		return val.String()
+		return val.String(), true
 	case nil:
-		return ""
+		return "", true
 	default:
-		return fmt.Sprintf("%v", val)
+		// Return false so the caller can treat the value as null instead of
+		// coercing an object or array into a string.
+		return "", false
 	}
 }
 
-func toBigFloat(v any) (*big.Float, error) {
+func toBigFloat(v any) (*big.Float, bool) {
 	switch val := v.(type) {
 	case json.Number:
 		f, _, err := big.NewFloat(0).SetPrec(128).Parse(val.String(), 10)
 		if err != nil {
-			return nil, err
+			return nil, false
 		}
-		return f, nil
+		return f, true
 	case float64:
-		return big.NewFloat(val).SetPrec(128), nil
+		return big.NewFloat(val).SetPrec(128), true
 	case int:
-		return big.NewFloat(float64(val)).SetPrec(128), nil
+		return big.NewFloat(float64(val)).SetPrec(128), true
 	case int64:
-		return big.NewFloat(float64(val)).SetPrec(128), nil
+		return big.NewFloat(float64(val)).SetPrec(128), true
 	case string:
 		f, _, err := big.NewFloat(0).SetPrec(128).Parse(val, 10)
 		if err != nil {
-			return nil, err
+			return nil, false
 		}
-		return f, nil
+		return f, true
 	default:
-		return nil, fmt.Errorf("cannot convert %T to number", v)
+		return nil, false
 	}
 }
 
@@ -176,9 +186,9 @@ func dynamicjsonToTfValue(v any) (tftypes.Value, error) {
 	case bool:
 		return tftypes.NewValue(tftypes.DynamicPseudoType, val), nil
 	case json.Number:
-		n, err := toBigFloat(val)
-		if err != nil {
-			return tftypes.Value{}, err
+		n, ok := toBigFloat(val)
+		if !ok {
+			return tftypes.NewValue(tftypes.DynamicPseudoType, nil), nil
 		}
 		return tftypes.NewValue(tftypes.DynamicPseudoType, n), nil
 	case float64:

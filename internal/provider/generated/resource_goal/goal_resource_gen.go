@@ -18,6 +18,13 @@ import (
 func GoalResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"add_owners": schema.ListAttribute{
+				ElementType:         types.Int64Type,
+				Optional:            true,
+				Computed:            true,
+				Description:         "Array of user IDs.",
+				MarkdownDescription: "Array of user IDs.",
+			},
 			"color": schema.StringAttribute{
 				Required: true,
 			},
@@ -145,11 +152,19 @@ func GoalResourceSchema(ctx context.Context) schema.Schema {
 				Description:         "Array of user IDs.",
 				MarkdownDescription: "Array of user IDs.",
 			},
+			"rem_owners": schema.ListAttribute{
+				ElementType:         types.Int64Type,
+				Optional:            true,
+				Computed:            true,
+				Description:         "Array of user IDs.",
+				MarkdownDescription: "Array of user IDs.",
+			},
 		},
 	}
 }
 
 type GoalModel struct {
+	AddOwners      types.List   `tfsdk:"add_owners"`
 	Color          types.String `tfsdk:"color"`
 	Description    types.String `tfsdk:"description"`
 	DueDate        types.Int64  `tfsdk:"due_date"`
@@ -158,6 +173,7 @@ type GoalModel struct {
 	MultipleOwners types.Bool   `tfsdk:"multiple_owners"`
 	Name           types.String `tfsdk:"name"`
 	Owners         types.List   `tfsdk:"owners"`
+	RemOwners      types.List   `tfsdk:"rem_owners"`
 }
 
 var _ basetypes.ObjectTypable = GoalType{}

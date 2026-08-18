@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 // APIError is returned when the ClickUp API responds with a non-2xx status code.
@@ -27,9 +28,13 @@ func IsNotFound(err error) bool {
 	return errors.As(err, &apiErr) && apiErr.StatusCode == http.StatusNotFound
 }
 
-const defaultBaseURL = "https://api.clickup.com"
+const (
+	// ClickUp V2 API endpoints are hosted under /api/v2 (not at the root domain).
+	defaultBaseURL     = "https://api.clickup.com/api"
+	defaultHTTPTimeout = 30 * time.Second
+)
 
-// Client interacts with the ClickUp Public API v3.
+// Client interacts with the ClickUp API.
 type Client struct {
 	baseURL    string
 	apiToken   string
@@ -42,7 +47,7 @@ func New(apiToken, baseURL string, httpClient *http.Client) *Client {
 		baseURL = defaultBaseURL
 	}
 	if httpClient == nil {
-		httpClient = http.DefaultClient
+		httpClient = &http.Client{Timeout: defaultHTTPTimeout}
 	}
 	return &Client{
 		baseURL:    strings.TrimRight(baseURL, "/"),

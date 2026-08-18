@@ -18,7 +18,17 @@ import (
 func SpaceResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"admin_can_manage": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "***Note:** Allowing or restricting admins from managing private Spaces using `\"admin_can_manage\"` is an [Enterprise Plan](https://clickup.com/pricing) feature.*",
+				MarkdownDescription: "***Note:** Allowing or restricting admins from managing private Spaces using `\"admin_can_manage\"` is an [Enterprise Plan](https://clickup.com/pricing) feature.*",
+			},
 			"archived": schema.BoolAttribute{
+				Computed: true,
+			},
+			"color": schema.StringAttribute{
+				Optional: true,
 				Computed: true,
 			},
 			"features": schema.SingleNestedAttribute{
@@ -258,6 +268,7 @@ func SpaceResourceSchema(ctx context.Context) schema.Schema {
 				Required: true,
 			},
 			"private": schema.BoolAttribute{
+				Optional: true,
 				Computed: true,
 			},
 			"space_id": schema.NumberAttribute{
@@ -296,7 +307,9 @@ func SpaceResourceSchema(ctx context.Context) schema.Schema {
 }
 
 type SpaceModel struct {
+	AdminCanManage    types.Bool    `tfsdk:"admin_can_manage"`
 	Archived          types.Bool    `tfsdk:"archived"`
+	Color             types.String  `tfsdk:"color"`
 	Features          FeaturesValue `tfsdk:"features"`
 	Id                types.String  `tfsdk:"id"`
 	MultipleAssignees types.Bool    `tfsdk:"multiple_assignees"`

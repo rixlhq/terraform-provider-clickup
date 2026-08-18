@@ -5,17 +5,46 @@ package provider
 import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 
+	resource_folderless_list "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/resource_folderless_list"
 	resource_goal "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/resource_goal"
 	resource_list "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/resource_list"
 	resource_space "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/resource_space"
 	resource_task "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/resource_task"
+	resource_view "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/resource_view"
 )
 
 var resourceFactories = []func() resource.Resource{
+	newFolderlessListResource,
 	newGoalResource,
 	newListResource,
 	newSpaceResource,
 	newTaskResource,
+	newViewResource,
+	newFolderViewResource,
+	newListViewResource,
+	newSpaceViewResource,
+}
+
+func newFolderlessListResource() resource.Resource {
+	return &genericResource{
+		name:             "folderless_list",
+		createPath:       "/v2/space/{space_id}/list",
+		readPath:         "/v2/list/{list_id}",
+		updatePath:       "/v2/list/{list_id}",
+		deletePath:       "/v2/list/{list_id}",
+		updateMethod:     "put",
+		createBodyFields: []string{"name", "content", "markdown_content", "due_date", "due_date_time", "priority", "assignee", "status"},
+		updateBodyFields: []string{"name", "content", "markdown_content", "due_date", "due_date_time", "priority", "assignee", "status", "unset_status"},
+		createBodyTransforms: map[string]func(any) any{
+			"assignee": stringToInt,
+		},
+		readTransforms: map[string]func(any) any{
+			"assignee": objectFieldToString,
+			"priority": objectFieldToInt,
+			"status":   objectFieldToString,
+		},
+		schemaFunc: resource_folderless_list.FolderlessListResourceSchema,
+	}
 }
 
 func newGoalResource() resource.Resource {
@@ -42,7 +71,15 @@ func newListResource() resource.Resource {
 		updateMethod:     "put",
 		createBodyFields: []string{"name", "content", "markdown_content", "due_date", "due_date_time", "priority", "assignee", "status"},
 		updateBodyFields: []string{"name", "content", "markdown_content", "due_date", "due_date_time", "priority", "assignee", "status", "unset_status"},
-		schemaFunc:       resource_list.ListResourceSchema,
+		createBodyTransforms: map[string]func(any) any{
+			"assignee": stringToInt,
+		},
+		readTransforms: map[string]func(any) any{
+			"assignee": objectFieldToString,
+			"priority": objectFieldToInt,
+			"status":   objectFieldToString,
+		},
+		schemaFunc: resource_list.ListResourceSchema,
 	}
 }
 
@@ -70,6 +107,120 @@ func newTaskResource() resource.Resource {
 		updateMethod:     "put",
 		createBodyFields: []string{"name", "description", "assignees", "archived", "group_assignees", "tags", "status", "priority", "due_date", "due_date_time", "time_estimate", "start_date", "start_date_time", "points", "notify_all", "parent", "markdown_content", "links_to", "check_required_custom_fields", "custom_fields", "custom_item_id"},
 		updateBodyFields: []string{"custom_item_id", "name", "description", "markdown_content", "status", "priority", "due_date", "due_date_time", "parent", "time_estimate", "start_date", "start_date_time", "points", "assignees", "group_assignees", "watchers", "archived"},
-		schemaFunc:       resource_task.TaskResourceSchema,
+		createBodyTransforms: map[string]func(any) any{
+			"assignees":       extractAddList,
+			"custom_fields":   parseCustomFieldValues,
+			"group_assignees": extractAddList,
+		},
+		readTransforms: map[string]func(any) any{
+			"assignees":       listToAddRemObject,
+			"custom_fields":   stringifyCustomFieldValues,
+			"group_assignees": listToAddRemObject,
+			"priority":        objectFieldToInt,
+			"status":          objectFieldToString,
+			"tags":            tagObjectsToStrings,
+			"watchers":        listToAddRemObject,
+		},
+		schemaFunc: resource_task.TaskResourceSchema,
+	}
+}
+
+func newViewResource() resource.Resource {
+	return &genericResource{
+		name:             "view",
+		createPath:       "/v2/team/{team_id}/view",
+		readPath:         "/v2/view/{view_id}",
+		updatePath:       "/v2/view/{view_id}",
+		deletePath:       "/v2/view/{view_id}",
+		updateMethod:     "put",
+		createBodyFields: []string{"name", "type", "grouping", "divide", "sorting", "filters", "columns", "team_sidebar", "settings"},
+		updateBodyFields: []string{"name", "type", "parent", "grouping", "divide", "sorting", "filters", "columns", "team_sidebar", "settings"},
+		createBodyTransforms: map[string]func(any) any{
+			"filters": parseFilterValues,
+		},
+		updateBodyTransforms: map[string]func(any) any{
+			"filters": parseFilterValues,
+		},
+		preReadTransforms: map[string]func(any) any{
+			"filters": stringifyFilterValues,
+		},
+		createResponseRoot: "view",
+		readResponseRoot:   "view",
+		schemaFunc:         resource_view.ViewResourceSchema,
+	}
+}
+
+func newFolderViewResource() resource.Resource {
+	return &genericResource{
+		name:             "folder_view",
+		createPath:       "/v2/folder/{folder_id}/view",
+		readPath:         "/v2/view/{view_id}",
+		updatePath:       "/v2/view/{view_id}",
+		deletePath:       "/v2/view/{view_id}",
+		updateMethod:     "put",
+		createBodyFields: []string{"name", "type", "grouping", "divide", "sorting", "filters", "columns", "team_sidebar", "settings"},
+		updateBodyFields: []string{"name", "type", "parent", "grouping", "divide", "sorting", "filters", "columns", "team_sidebar", "settings"},
+		createBodyTransforms: map[string]func(any) any{
+			"filters": parseFilterValues,
+		},
+		updateBodyTransforms: map[string]func(any) any{
+			"filters": parseFilterValues,
+		},
+		preReadTransforms: map[string]func(any) any{
+			"filters": stringifyFilterValues,
+		},
+		createResponseRoot: "view",
+		readResponseRoot:   "view",
+		schemaFunc:         resource_view.ViewResourceSchema,
+	}
+}
+
+func newListViewResource() resource.Resource {
+	return &genericResource{
+		name:             "list_view",
+		createPath:       "/v2/list/{list_id}/view",
+		readPath:         "/v2/view/{view_id}",
+		updatePath:       "/v2/view/{view_id}",
+		deletePath:       "/v2/view/{view_id}",
+		updateMethod:     "put",
+		createBodyFields: []string{"name", "type", "grouping", "divide", "sorting", "filters", "columns", "team_sidebar", "settings"},
+		updateBodyFields: []string{"name", "type", "parent", "grouping", "divide", "sorting", "filters", "columns", "team_sidebar", "settings"},
+		createBodyTransforms: map[string]func(any) any{
+			"filters": parseFilterValues,
+		},
+		updateBodyTransforms: map[string]func(any) any{
+			"filters": parseFilterValues,
+		},
+		preReadTransforms: map[string]func(any) any{
+			"filters": stringifyFilterValues,
+		},
+		createResponseRoot: "view",
+		readResponseRoot:   "view",
+		schemaFunc:         resource_view.ViewResourceSchema,
+	}
+}
+
+func newSpaceViewResource() resource.Resource {
+	return &genericResource{
+		name:             "space_view",
+		createPath:       "/v2/space/{space_id}/view",
+		readPath:         "/v2/view/{view_id}",
+		updatePath:       "/v2/view/{view_id}",
+		deletePath:       "/v2/view/{view_id}",
+		updateMethod:     "put",
+		createBodyFields: []string{"name", "type", "grouping", "divide", "sorting", "filters", "columns", "team_sidebar", "settings"},
+		updateBodyFields: []string{"name", "type", "parent", "grouping", "divide", "sorting", "filters", "columns", "team_sidebar", "settings"},
+		createBodyTransforms: map[string]func(any) any{
+			"filters": parseFilterValues,
+		},
+		updateBodyTransforms: map[string]func(any) any{
+			"filters": parseFilterValues,
+		},
+		preReadTransforms: map[string]func(any) any{
+			"filters": stringifyFilterValues,
+		},
+		createResponseRoot: "view",
+		readResponseRoot:   "view",
+		schemaFunc:         resource_view.ViewResourceSchema,
 	}
 }
