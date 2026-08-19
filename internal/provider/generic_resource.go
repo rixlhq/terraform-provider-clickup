@@ -39,7 +39,6 @@ type genericResource struct {
 	// that must be appended to GET requests used by readModel.
 	readQueryParams map[string]string
 	schemaFunc      func(context.Context) resource_schema.Schema
-	schema          resource_schema.Schema
 	// readFromList is set when the API has no single-GET endpoint. The resource
 	// reads the collection at readPath and filters the item whose
 	// readListIDField equals the resource ID.
@@ -67,17 +66,12 @@ func (r *genericResource) Metadata(_ context.Context, req resource.MetadataReque
 	resp.TypeName = req.ProviderTypeName + "_" + r.name
 }
 
-func (r *genericResource) loadSchema(ctx context.Context) {
-	if r.schema.Attributes != nil {
-		return
-	}
-	r.schema = r.schemaFunc(ctx)
-	r.schema = r.addMissingPathParamAttributes()
+func (r *genericResource) schema(ctx context.Context) resource_schema.Schema {
+	return r.addMissingPathParamAttributes(r.schemaFunc(ctx))
 }
 
 func (r *genericResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	r.loadSchema(ctx)
-	resp.Schema = r.schema
+	resp.Schema = r.schema(ctx)
 }
 func (r *genericResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
@@ -92,7 +86,6 @@ func (r *genericResource) Configure(_ context.Context, req resource.ConfigureReq
 }
 
 func (r *genericResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	r.loadSchema(ctx)
 	if r.client == nil {
 		resp.Diagnostics.AddError("Missing ClickUp Client", "Configure the provider with api_token or CLICKUP_API_TOKEN to use this resource.")
 		return
@@ -123,17 +116,34 @@ func (r *genericResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	final, diags := r.readModel(ctx, plan, id)
+	// Persist the ID immediately so a failed follow-up read leaves a
+	// recoverable state instead of an orphan.
+	param := r.idParam()
+	planWithID, d := r.withPathParam(ctx, plan, param, id)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.State.Raw = planWithID
+
+	final, diags := r.readModel(ctx, planWithID, id)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	resp.State.Raw = final
+	for _, d := range diags {
+		if d.Severity() == diag.SeverityWarning && d.Summary() == "Not Found" {
+			return
+		}
+	}
+
+	if final.Type() != nil {
+		resp.State.Raw = final
+	}
 }
 
 func (r *genericResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	r.loadSchema(ctx)
 	if r.client == nil {
 		resp.Diagnostics.AddError("Missing ClickUp Client", "Configure the provider with api_token or CLICKUP_API_TOKEN to use this resource.")
 		return
@@ -163,7 +173,6 @@ func (r *genericResource) Read(ctx context.Context, req resource.ReadRequest, re
 }
 
 func (r *genericResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	r.loadSchema(ctx)
 	if r.client == nil {
 		resp.Diagnostics.AddError("Missing ClickUp Client", "Configure the provider with api_token or CLICKUP_API_TOKEN to use this resource.")
 		return
@@ -219,17 +228,34 @@ func (r *genericResource) Update(ctx context.Context, req resource.UpdateRequest
 		newID = resolved
 	}
 
-	final, diags := r.readModel(ctx, merged, newID)
+	// Persist the updated identifier immediately so a failed read leaves a
+	// recoverable state.
+	param := r.idParam()
+	mergedWithID, d := r.withPathParam(ctx, merged, param, newID)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.State.Raw = mergedWithID
+
+	final, diags := r.readModel(ctx, mergedWithID, newID)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	resp.State.Raw = final
+	for _, d := range diags {
+		if d.Severity() == diag.SeverityWarning && d.Summary() == "Not Found" {
+			return
+		}
+	}
+
+	if final.Type() != nil {
+		resp.State.Raw = final
+	}
 }
 
 func (r *genericResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	r.loadSchema(ctx)
 	if r.client == nil {
 		resp.Diagnostics.AddError("Missing ClickUp Client", "Configure the provider with api_token or CLICKUP_API_TOKEN to use this resource.")
 		return
@@ -275,6 +301,9 @@ func (r *genericResource) readModel(ctx context.Context, base tftypes.Value, id 
 	jv, d := r.getAndDecode(ctx, readPath, id, query)
 	diags.Append(d...)
 	if diags.HasError() {
+		return tftypes.Value{}, diags
+	}
+	if jv == nil {
 		return tftypes.Value{}, diags
 	}
 
