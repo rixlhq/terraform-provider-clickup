@@ -11,6 +11,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	resource_schema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 
 	"github.com/rixlhq/terraform-provider-clickup/internal/provider/clickupcommon"
@@ -187,7 +189,7 @@ func (r *genericResource) updateBodyValue(_ context.Context, merged, plan tftype
 }
 
 func (r *genericResource) tfType(ctx context.Context) tftypes.Type {
-	return r.schema.Type().TerraformType(ctx)
+	return r.schema(ctx).Type().TerraformType(ctx)
 }
 
 // mergeTfValues returns a new tftypes.Value that prefers the latest value but
@@ -261,24 +263,27 @@ func allElementsNull(v tftypes.Value) bool {
 	return true
 }
 
-func (r *genericResource) addMissingPathParamAttributes() resource_schema.Schema {
-	if r.createPath == "" || r.schema.Attributes == nil {
-		return r.schema
+func (r *genericResource) addMissingPathParamAttributes(s resource_schema.Schema) resource_schema.Schema {
+	if r.createPath == "" || s.Attributes == nil {
+		return s
 	}
 	for _, match := range pathParamRegex.FindAllStringSubmatch(r.createPath, -1) {
 		param := clickupcommon.TerraformIdentifier(match[1])
-		if _, ok := r.schema.Attributes[param]; ok {
+		if _, ok := s.Attributes[param]; ok {
 			continue
 		}
 		// Default to a Required StringAttribute so the path parameter accepts
 		// numeric and non-numeric IDs and is converted to a string when building
 		// the API path.
-		r.schema.Attributes[param] = resource_schema.StringAttribute{
+		s.Attributes[param] = resource_schema.StringAttribute{
 			Required:            true,
 			MarkdownDescription: fmt.Sprintf("ClickUp %s path parameter required to create this %s.", param, r.name),
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.RequiresReplace(),
+			},
 		}
 	}
-	return r.schema
+	return s
 }
 
 func (r *genericResource) withPathParam(ctx context.Context, v tftypes.Value, param, id string) (tftypes.Value, diag.Diagnostics) {
