@@ -5,9 +5,13 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/rixlhq/terraform-provider-clickup/internal/clickupclient"
@@ -21,19 +25,20 @@ type webhookResource struct {
 }
 
 type webhookResourceModel struct {
-	WebhookId types.String `tfsdk:"webhook_id"`
-	TeamId    types.Int64  `tfsdk:"team_id"`
-	Endpoint  types.String `tfsdk:"endpoint"`
-	Events    types.List   `tfsdk:"events"`
-	Status    types.String `tfsdk:"status"`
-	SpaceId   types.String `tfsdk:"space_id"`
-	FolderId  types.String `tfsdk:"folder_id"`
-	ListId    types.String `tfsdk:"list_id"`
-	TaskId    types.String `tfsdk:"task_id"`
-	ClientId  types.String `tfsdk:"client_id"`
-	Health    types.String `tfsdk:"health"`
-	Secret    types.String `tfsdk:"secret"`
-	UserId    types.Int64  `tfsdk:"user_id"`
+	WebhookId    types.String `tfsdk:"webhook_id"`
+	TeamId       types.Int64  `tfsdk:"team_id"`
+	Endpoint     types.String `tfsdk:"endpoint"`
+	Events       types.List   `tfsdk:"events"`
+	Status       types.String `tfsdk:"status"`
+	SpaceId      types.String `tfsdk:"space_id"`
+	FolderId     types.String `tfsdk:"folder_id"`
+	ListId       types.String `tfsdk:"list_id"`
+	TaskId       types.String `tfsdk:"task_id"`
+	ClientId     types.String `tfsdk:"client_id"`
+	Health       types.String `tfsdk:"health"`
+	HealthStatus types.String `tfsdk:"health_status"`
+	Secret       types.String `tfsdk:"secret"`
+	UserId       types.Int64  `tfsdk:"user_id"`
 }
 
 func newWebhookResource() resource.Resource {
@@ -53,6 +58,9 @@ func (r *webhookResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			},
 			"team_id": schema.Int64Attribute{
 				Required: true,
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.RequiresReplace(),
+				},
 			},
 			"endpoint": schema.StringAttribute{
 				Required: true,
@@ -67,20 +75,35 @@ func (r *webhookResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			},
 			"space_id": schema.StringAttribute{
 				Optional: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"folder_id": schema.StringAttribute{
 				Optional: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"list_id": schema.StringAttribute{
 				Optional: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"task_id": schema.StringAttribute{
 				Optional: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"client_id": schema.StringAttribute{
 				Computed: true,
 			},
 			"health": schema.StringAttribute{
+				Computed: true,
+			},
+			"health_status": schema.StringAttribute{
 				Computed: true,
 			},
 			"secret": schema.StringAttribute{
@@ -133,8 +156,10 @@ func (r *webhookResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 	data.WebhookId = types.StringValue(id)
 
-	r.refresh(ctx, &data, &resp.Diagnostics)
-	if resp.Diagnostics.HasError() {
+	if !r.refresh(ctx, &data, &resp.Diagnostics) {
+		if !resp.Diagnostics.HasError() {
+			resp.Diagnostics.AddError("ClickUp API Error", "newly created webhook was not found in list")
+		}
 		return
 	}
 
@@ -148,13 +173,10 @@ func (r *webhookResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	r.refresh(ctx, &data, &resp.Diagnostics)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	if data.WebhookId.IsNull() {
-		resp.State.RemoveResource(ctx)
+	if !r.refresh(ctx, &data, &resp.Diagnostics) {
+		if !resp.Diagnostics.HasError() {
+			resp.State.RemoveResource(ctx)
+		}
 		return
 	}
 
@@ -194,8 +216,10 @@ func (r *webhookResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	r.refresh(ctx, &data, &resp.Diagnostics)
-	if resp.Diagnostics.HasError() {
+	if !r.refresh(ctx, &data, &resp.Diagnostics) {
+		if !resp.Diagnostics.HasError() {
+			resp.Diagnostics.AddError("ClickUp API Error", "updated webhook was not found in list")
+		}
 		return
 	}
 
@@ -215,4 +239,32 @@ func (r *webhookResource) Delete(ctx context.Context, req resource.DeleteRequest
 			resp.Diagnostics.AddError("ClickUp API Error", err.Error())
 		}
 	}
+}
+
+func (r *webhookResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	parts := strings.SplitN(req.ID, ":", 2)
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		resp.Diagnostics.AddError("Invalid ID", "expected team_id:webhook_id")
+		return
+	}
+
+	teamID, err := strconv.ParseInt(parts[0], 10, 64)
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid team_id", err.Error())
+		return
+	}
+
+	data := webhookResourceModel{
+		TeamId:    types.Int64Value(teamID),
+		WebhookId: types.StringValue(parts[1]),
+	}
+
+	if !r.refresh(ctx, &data, &resp.Diagnostics) {
+		if !resp.Diagnostics.HasError() {
+			resp.Diagnostics.AddError("Not Found", "webhook not found")
+		}
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
