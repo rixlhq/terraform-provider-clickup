@@ -42,8 +42,7 @@ func taskCommentSchema(_ context.Context) schema.Schema {
 				Required: true,
 			},
 			"comment_text": schema.StringAttribute{
-				Optional: true,
-				Computed: true,
+				Required: true,
 			},
 			"assignee": schema.Int64Attribute{
 				Optional: true,

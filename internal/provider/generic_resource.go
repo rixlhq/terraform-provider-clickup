@@ -314,7 +314,10 @@ func (r *genericResource) readModel(ctx context.Context, base tftypes.Value, id 
 		r.applyTransforms(m, r.readTransforms)
 	}
 
-	tfVal, err := clickupcommon.JSONToTfValue(ctx, r.tfType(ctx), jv)
+	// Use the unknown-missing converter so that fields the API omits are
+	// treated as unknown and merged from state, while explicit API nulls are
+	// preserved and overwrite state values.
+	tfVal, err := clickupcommon.JSONToTfValueWithUnknownMissing(ctx, r.tfType(ctx), jv)
 	if err != nil {
 		diags.AddError("State Conversion Error", err.Error())
 		return tftypes.Value{}, diags
@@ -407,34 +410,59 @@ func (r *genericResource) queryParams(_ context.Context, v tftypes.Value) (url.V
 
 func (r *genericResource) getAndDecode(ctx context.Context, readPath, id string, query url.Values) (any, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	raw, err := r.client.Get(ctx, readPath, query)
-	if err != nil {
-		if clickupclient.IsNotFound(err) {
-			diags.AddWarning("Not Found", fmt.Sprintf("ClickUp API returned 404 for %s %s", r.name, id))
-			return nil, diags
-		}
-		diags.AddError("ClickUp API Error", err.Error())
-		return nil, diags
-	}
-
-	jv, err := clickupcommon.DecodeJSONResponse(raw)
-	if err != nil {
-		diags.AddError("Response Decode Error", err.Error())
-		return nil, diags
-	}
-
-	if r.readFromList {
-		jv, err = r.findInList(jv, id)
+	if !r.readFromList {
+		raw, err := r.client.Get(ctx, readPath, query)
 		if err != nil {
-			var notFound *notFoundError
-			if errors.As(err, &notFound) {
-				diags.AddWarning("Not Found", err.Error())
+			if clickupclient.IsNotFound(err) {
+				diags.AddWarning("Not Found", fmt.Sprintf("ClickUp API returned 404 for %s %s", r.name, id))
 				return nil, diags
 			}
+			diags.AddError("ClickUp API Error", err.Error())
+			return nil, diags
+		}
+
+		jv, err := clickupcommon.DecodeJSONResponse(raw)
+		if err != nil {
+			diags.AddError("Response Decode Error", err.Error())
+			return nil, diags
+		}
+		return jv, diags
+	}
+
+	pageQuery := cloneURLValues(query)
+	seen := make(map[string]bool)
+	for {
+		raw, err := r.client.Get(ctx, readPath, pageQuery)
+		if err != nil {
+			if clickupclient.IsNotFound(err) {
+				diags.AddWarning("Not Found", fmt.Sprintf("ClickUp API returned 404 for %s %s", r.name, id))
+				return nil, diags
+			}
+			diags.AddError("ClickUp API Error", err.Error())
+			return nil, diags
+		}
+
+		jv, err := clickupcommon.DecodeJSONResponse(raw)
+		if err != nil {
+			diags.AddError("Response Decode Error", err.Error())
+			return nil, diags
+		}
+
+		item, err := r.findInList(jv, id)
+		if err == nil {
+			return item, diags
+		}
+		var notFound *notFoundError
+		if !errors.As(err, &notFound) {
 			diags.AddError("Read Error", err.Error())
 			return nil, diags
 		}
-	}
 
-	return jv, diags
+		next, ok := r.nextListPageQuery(jv, query, seen)
+		if !ok {
+			diags.AddWarning("Not Found", notFound.message)
+			return nil, diags
+		}
+		pageQuery = next
+	}
 }

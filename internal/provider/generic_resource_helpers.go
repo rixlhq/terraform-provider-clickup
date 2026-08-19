@@ -11,6 +11,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	resource_schema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/numberplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
@@ -192,15 +194,19 @@ func (r *genericResource) tfType(ctx context.Context) tftypes.Type {
 	return r.schema(ctx).Type().TerraformType(ctx)
 }
 
-// mergeTfValues returns a new tftypes.Value that prefers the latest value but
-// falls back to the base value whenever latest is null or unknown. This lets
-// resource reads preserve parent path parameters and request-only fields that
-// are not returned by the ClickUp API.
+// mergeTfValues returns a new tftypes.Value that prefers the latest value.
+// Unknown values in the latest value (e.g. fields omitted from an API response)
+// fall back to the base value so request-only and path attributes are preserved.
+// Explicit null values in the latest value are preserved as null so a field that
+// the API returns as null will clear the corresponding state value.
 func mergeTfValues(base, latest tftypes.Value) (tftypes.Value, error) {
-	if !latest.IsKnown() || latest.IsNull() {
+	if !latest.IsKnown() {
 		if base.IsKnown() && !base.IsNull() {
 			return base, nil
 		}
+		return tftypes.NewValue(latest.Type(), nil), nil
+	}
+	if latest.IsNull() {
 		return tftypes.NewValue(latest.Type(), nil), nil
 	}
 	if !base.IsKnown() || base.IsNull() || !base.Type().Is(latest.Type()) {
@@ -269,7 +275,10 @@ func (r *genericResource) addMissingPathParamAttributes(s resource_schema.Schema
 	}
 	for _, match := range pathParamRegex.FindAllStringSubmatch(r.createPath, -1) {
 		param := clickupcommon.TerraformIdentifier(match[1])
-		if _, ok := s.Attributes[param]; ok {
+		if attr, ok := s.Attributes[param]; ok {
+			// The attribute already exists but it identifies the collection where
+			// the object is created, so changes must trigger replacement.
+			s.Attributes[param] = withRequiresReplace(attr)
 			continue
 		}
 		// Default to a Required StringAttribute so the path parameter accepts
@@ -284,6 +293,21 @@ func (r *genericResource) addMissingPathParamAttributes(s resource_schema.Schema
 		}
 	}
 	return s
+}
+
+func withRequiresReplace(attr resource_schema.Attribute) resource_schema.Attribute {
+	switch a := attr.(type) {
+	case resource_schema.StringAttribute:
+		a.PlanModifiers = append(a.PlanModifiers, stringplanmodifier.RequiresReplace())
+		return a
+	case resource_schema.Int64Attribute:
+		a.PlanModifiers = append(a.PlanModifiers, int64planmodifier.RequiresReplace())
+		return a
+	case resource_schema.NumberAttribute:
+		a.PlanModifiers = append(a.PlanModifiers, numberplanmodifier.RequiresReplace())
+		return a
+	}
+	return attr
 }
 
 func (r *genericResource) withPathParam(ctx context.Context, v tftypes.Value, param, id string) (tftypes.Value, diag.Diagnostics) {
@@ -390,6 +414,9 @@ func (r *genericResource) resolveResourceID(raw, body []byte) (string, error) {
 }
 
 func valueToIDString(v any) string {
+	if v == nil {
+		return ""
+	}
 	switch x := v.(type) {
 	case string:
 		return x
@@ -412,11 +439,7 @@ type notFoundError struct{ message string }
 
 func (e *notFoundError) Error() string { return e.message }
 
-func (r *genericResource) findInList(jv any, id string) (any, error) {
-	if _, ok := jv.(map[string]any); !ok {
-		return nil, errors.New("list response is not a JSON object")
-	}
-
+func (r *genericResource) listItems(jv any) ([]any, error) {
 	v := jv
 	for key := range strings.SplitSeq(r.readListRoot, ".") {
 		m, ok := v.(map[string]any)
@@ -433,6 +456,18 @@ func (r *genericResource) findInList(jv any, id string) (any, error) {
 	if !ok {
 		return nil, fmt.Errorf("list response did not contain %q array", r.readListRoot)
 	}
+	return items, nil
+}
+
+func (r *genericResource) findInList(jv any, id string) (any, error) {
+	if _, ok := jv.(map[string]any); !ok {
+		return nil, errors.New("list response is not a JSON object")
+	}
+
+	items, err := r.listItems(jv)
+	if err != nil {
+		return nil, err
+	}
 	for _, item := range items {
 		obj, ok := item.(map[string]any)
 		if !ok {
@@ -447,6 +482,61 @@ func (r *genericResource) findInList(jv any, id string) (any, error) {
 		}
 	}
 	return nil, &notFoundError{message: fmt.Sprintf("%s with %s=%q not found in list", r.name, r.readListIDField, id)}
+}
+
+func (r *genericResource) nextListPageQuery(jv any, base url.Values, seen map[string]bool) (url.Values, bool) {
+	root, ok := jv.(map[string]any)
+	if !ok {
+		return nil, false
+	}
+	if lp, ok := root["last_page"].(bool); ok && lp {
+		return nil, false
+	}
+
+	items, err := r.listItems(jv)
+	if err != nil || len(items) == 0 {
+		return nil, false
+	}
+
+	last, ok := items[len(items)-1].(map[string]any)
+	if !ok {
+		return nil, false
+	}
+
+	id, ok := last[r.readListIDField]
+	if !ok {
+		return nil, false
+	}
+	idStr := valueToIDString(id)
+	if idStr == "" || seen[idStr] {
+		return nil, false
+	}
+	seen[idStr] = true
+
+	date, ok := last["date"]
+	if !ok || date == nil {
+		return nil, false
+	}
+	start := valueToIDString(date)
+	if start == "" {
+		return nil, false
+	}
+
+	next := cloneURLValues(base)
+	next.Set("start_id", idStr)
+	next.Set("start", start)
+	return next, true
+}
+
+func cloneURLValues(v url.Values) url.Values {
+	if v == nil {
+		return url.Values{}
+	}
+	out := make(url.Values, len(v))
+	for k, vv := range v {
+		out[k] = append([]string(nil), vv...)
+	}
+	return out
 }
 
 // extractAddList converts ClickUp's { add: [...], rem: [...] } update shape
