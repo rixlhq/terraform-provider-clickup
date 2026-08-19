@@ -199,14 +199,14 @@
       },
       "schema": {}
     },
-    "workspaceseats": {
+    "workspace_seats": {
       "read": {
         "path": "/v2/team/{team_id}/seats",
         "method": "get"
       },
       "schema": {}
     },
-    "workspaceplan": {
+    "workspace_plan": {
       "read": {
         "path": "/v2/team/{team_id}/plan",
         "method": "get"
@@ -220,42 +220,42 @@
       },
       "schema": {}
     },
-    "teams1": {
+    "user_groups": {
       "read": {
         "path": "/v2/group",
         "method": "get"
       },
       "schema": {}
     },
-    "trackedtime": {
+    "tracked_time": {
       "read": {
         "path": "/v2/task/{task_id}/time",
         "method": "get"
       },
       "schema": {}
     },
-    "singulartimeentry": {
+    "time_entry": {
       "read": {
         "path": "/v2/team/{team_id}/time_entries/{timer_id}",
         "method": "get"
       },
       "schema": {}
     },
-    "timeentryhistory": {
+    "time_entry_history": {
       "read": {
         "path": "/v2/team/{team_id}/time_entries/{timer_id}/history",
         "method": "get"
       },
       "schema": {}
     },
-    "runningtimeentry": {
+    "running_time_entry": {
       "read": {
         "path": "/v2/team/{team_id}/time_entries/current",
         "method": "get"
       },
       "schema": {}
     },
-    "alltagsfromtimeentries": {
+    "time_entry_tags": {
       "read": {
         "path": "/v2/team/{team_id}/time_entries/tags",
         "method": "get"

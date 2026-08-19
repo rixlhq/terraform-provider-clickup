@@ -16,9 +16,25 @@ HAND_WRITTEN_DATA_SOURCES = {
     "task",
     "view",
     "view_tasks",
-    "task_s_timein_status",
-    "bulk_tasks_timein_status",
+    "task_time_in_status",
+    "bulk_time_in_status",
     "time_entries",
+}
+
+# OperationId-to-provider-name overrides. The data_source_name() derivation
+# from OpenAPI operationId cannot produce clean names for apostrophes,
+# camelCase concatenations, and ClickUp's internal numbering (e.g. Teams1).
+DATA_SOURCE_NAME_OVERRIDES = {
+    "GetTask'sTimeinStatus": "task_time_in_status",
+    "GetBulkTasks'TimeinStatus": "bulk_time_in_status",
+    "GetWorkspaceplan": "workspace_plan",
+    "GetWorkspaceseats": "workspace_seats",
+    "GetTeams1": "user_groups",
+    "Gettrackedtime": "tracked_time",
+    "Getsingulartimeentry": "time_entry",
+    "Gettimeentryhistory": "time_entry_history",
+    "Getrunningtimeentry": "running_time_entry",
+    "Getalltagsfromtimeentries": "time_entry_tags",
 }
 
 # Extra resources that build_resources does not discover automatically.
@@ -46,6 +62,9 @@ def camel_to_snake(name: str) -> str:
 
 
 def data_source_name(operation_id: str) -> str:
+    if operation_id in DATA_SOURCE_NAME_OVERRIDES:
+        return DATA_SOURCE_NAME_OVERRIDES[operation_id]
+
     # Strip common read prefixes, then snake-case.
     cleaned = re.sub(r"^(Get|get|Search|search)", "", operation_id)
     cleaned = camel_to_snake(cleaned)
