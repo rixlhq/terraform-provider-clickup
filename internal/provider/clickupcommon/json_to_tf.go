@@ -9,7 +9,22 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
+// jsonToTfValue is the public wrapper that preserves backward compatibility for
+// tests and converts missing object attributes to null.
 func jsonToTfValue(ctx context.Context, t tftypes.Type, v any) (tftypes.Value, error) {
+	return jsonToTfValueInternal(ctx, t, v, false)
+}
+
+// JSONToTfValueWithUnknownMissing converts a JSON-decoded value to a
+// tftypes.Value, but treats object attributes that are absent from the JSON as
+// unknown instead of null. This lets resource reads distinguish "explicitly
+// returned null" (which should overwrite state) from "not returned" (which
+// should preserve state).
+func JSONToTfValueWithUnknownMissing(ctx context.Context, t tftypes.Type, v any) (tftypes.Value, error) {
+	return jsonToTfValueInternal(ctx, t, v, true)
+}
+
+func jsonToTfValueInternal(ctx context.Context, t tftypes.Type, v any, unknownMissing bool) (tftypes.Value, error) {
 	if v == nil {
 		return tftypes.NewValue(t, nil), nil
 	}
@@ -48,21 +63,21 @@ func jsonToTfValue(ctx context.Context, t tftypes.Type, v any) (tftypes.Value, e
 
 	switch ty := t.(type) {
 	case tftypes.Object:
-		return jsonToTfObject(ctx, t, ty, v)
+		return jsonToTfObject(ctx, t, ty, v, unknownMissing)
 	case tftypes.List:
-		return jsonToTfList(ctx, t, ty.ElementType, v)
+		return jsonToTfList(ctx, t, ty.ElementType, v, unknownMissing)
 	case tftypes.Set:
-		return jsonToTfList(ctx, t, ty.ElementType, v)
+		return jsonToTfList(ctx, t, ty.ElementType, v, unknownMissing)
 	case tftypes.Map:
-		return jsonToTfMap(ctx, t, ty, v)
+		return jsonToTfMap(ctx, t, ty, v, unknownMissing)
 	case tftypes.Tuple:
-		return jsonToTfTuple(ctx, t, ty, v)
+		return jsonToTfTuple(ctx, t, ty, v, unknownMissing)
 	default:
 		return tftypes.Value{}, fmt.Errorf("unsupported tftypes.Type %T", t)
 	}
 }
 
-func jsonToTfObject(ctx context.Context, t tftypes.Type, ty tftypes.Object, v any) (tftypes.Value, error) {
+func jsonToTfObject(ctx context.Context, t tftypes.Type, ty tftypes.Object, v any, unknownMissing bool) (tftypes.Value, error) {
 	m, ok := v.(map[string]any)
 	if !ok {
 		return tftypes.NewValue(t, nil), nil
@@ -79,10 +94,14 @@ func jsonToTfObject(ctx context.Context, t tftypes.Type, ty tftypes.Object, v an
 	for attr, attrType := range ty.AttributeTypes {
 		attrVal, ok := normalized[attr]
 		if !ok {
-			vals[attr] = tftypes.NewValue(attrType, nil)
+			if unknownMissing {
+				vals[attr] = tftypes.NewValue(attrType, tftypes.UnknownValue)
+			} else {
+				vals[attr] = tftypes.NewValue(attrType, nil)
+			}
 			continue
 		}
-		converted, err := jsonToTfValue(ctx, attrType, attrVal)
+		converted, err := jsonToTfValueInternal(ctx, attrType, attrVal, unknownMissing)
 		if err != nil {
 			return tftypes.Value{}, err
 		}
@@ -91,14 +110,14 @@ func jsonToTfObject(ctx context.Context, t tftypes.Type, ty tftypes.Object, v an
 	return tftypes.NewValue(t, vals), nil
 }
 
-func jsonToTfList(ctx context.Context, t tftypes.Type, elemType tftypes.Type, v any) (tftypes.Value, error) {
+func jsonToTfList(ctx context.Context, t tftypes.Type, elemType tftypes.Type, v any, unknownMissing bool) (tftypes.Value, error) {
 	s, ok := v.([]any)
 	if !ok {
 		return tftypes.NewValue(t, nil), nil
 	}
 	vals := make([]tftypes.Value, 0, len(s))
 	for _, elem := range s {
-		converted, err := jsonToTfValue(ctx, elemType, elem)
+		converted, err := jsonToTfValueInternal(ctx, elemType, elem, unknownMissing)
 		if err != nil {
 			return tftypes.Value{}, err
 		}
@@ -107,14 +126,14 @@ func jsonToTfList(ctx context.Context, t tftypes.Type, elemType tftypes.Type, v 
 	return tftypes.NewValue(t, vals), nil
 }
 
-func jsonToTfMap(ctx context.Context, t tftypes.Type, ty tftypes.Map, v any) (tftypes.Value, error) {
+func jsonToTfMap(ctx context.Context, t tftypes.Type, ty tftypes.Map, v any, unknownMissing bool) (tftypes.Value, error) {
 	m, ok := v.(map[string]any)
 	if !ok {
 		return tftypes.NewValue(t, nil), nil
 	}
 	vals := make(map[string]tftypes.Value, len(m))
 	for k, elem := range m {
-		converted, err := jsonToTfValue(ctx, ty.ElementType, elem)
+		converted, err := jsonToTfValueInternal(ctx, ty.ElementType, elem, unknownMissing)
 		if err != nil {
 			return tftypes.Value{}, err
 		}
@@ -123,14 +142,14 @@ func jsonToTfMap(ctx context.Context, t tftypes.Type, ty tftypes.Map, v any) (tf
 	return tftypes.NewValue(t, vals), nil
 }
 
-func jsonToTfTuple(ctx context.Context, t tftypes.Type, ty tftypes.Tuple, v any) (tftypes.Value, error) {
+func jsonToTfTuple(ctx context.Context, t tftypes.Type, ty tftypes.Tuple, v any, unknownMissing bool) (tftypes.Value, error) {
 	s, ok := v.([]any)
 	if !ok || len(s) != len(ty.ElementTypes) {
 		return tftypes.NewValue(t, nil), nil
 	}
 	vals := make([]tftypes.Value, 0, len(s))
 	for i, elem := range s {
-		converted, err := jsonToTfValue(ctx, ty.ElementTypes[i], elem)
+		converted, err := jsonToTfValueInternal(ctx, ty.ElementTypes[i], elem, unknownMissing)
 		if err != nil {
 			return tftypes.Value{}, err
 		}
@@ -186,14 +205,14 @@ func dynamicjsonToTfValue(v any) (tftypes.Value, error) {
 	case bool:
 		return tftypes.NewValue(tftypes.DynamicPseudoType, val), nil
 	case json.Number:
-		n, ok := toBigFloat(val)
-		if !ok {
-			return tftypes.NewValue(tftypes.DynamicPseudoType, nil), nil
+		f, _, err := big.NewFloat(0).SetPrec(128).Parse(val.String(), 10)
+		if err == nil {
+			return tftypes.NewValue(tftypes.DynamicPseudoType, f), nil
 		}
-		return tftypes.NewValue(tftypes.DynamicPseudoType, n), nil
+		return tftypes.NewValue(tftypes.DynamicPseudoType, val.String()), nil
 	case float64:
 		return tftypes.NewValue(tftypes.DynamicPseudoType, big.NewFloat(val).SetPrec(128)), nil
-	case int:
+	case int64:
 		return tftypes.NewValue(tftypes.DynamicPseudoType, big.NewFloat(float64(val)).SetPrec(128)), nil
 	case string:
 		return tftypes.NewValue(tftypes.DynamicPseudoType, val), nil
@@ -218,6 +237,6 @@ func dynamicjsonToTfValue(v any) (tftypes.Value, error) {
 		}
 		return tftypes.NewValue(tftypes.DynamicPseudoType, vals), nil
 	default:
-		return tftypes.Value{}, fmt.Errorf("unsupported dynamic value type %T", val)
+		return tftypes.Value{}, fmt.Errorf("cannot convert %T to dynamic type", v)
 	}
 }
