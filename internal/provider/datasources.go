@@ -5,7 +5,6 @@ package provider
 import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	datasource_accessible_custom_fields "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_accessible_custom_fields"
-	datasource_alltagsfromtimeentries "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_alltagsfromtimeentries"
 	datasource_authorized_teams "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_authorized_teams"
 	datasource_authorized_user "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_authorized_user"
 	datasource_chat_view_comments "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_chat_view_comments"
@@ -25,9 +24,8 @@ import (
 	datasource_list_templates "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_list_templates"
 	datasource_list_views "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_list_views"
 	datasource_lists "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_lists"
-	datasource_runningtimeentry "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_runningtimeentry"
+	datasource_running_time_entry "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_running_time_entry"
 	datasource_shared_hierarchy "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_shared_hierarchy"
-	datasource_singulartimeentry "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_singulartimeentry"
 	datasource_space "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_space"
 	datasource_space_available_fields "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_space_available_fields"
 	datasource_space_tags "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_space_tags"
@@ -39,20 +37,21 @@ import (
 	datasource_tasks "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_tasks"
 	datasource_team_available_fields "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_team_available_fields"
 	datasource_team_views "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_team_views"
-	datasource_teams1 "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_teams1"
 	datasource_threaded_comments "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_threaded_comments"
-	datasource_timeentryhistory "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_timeentryhistory"
-	datasource_trackedtime "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_trackedtime"
+	datasource_time_entry "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_time_entry"
+	datasource_time_entry_history "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_time_entry_history"
+	datasource_time_entry_tags "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_time_entry_tags"
+	datasource_tracked_time "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_tracked_time"
 	datasource_user "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_user"
+	datasource_user_groups "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_user_groups"
 	datasource_webhooks "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_webhooks"
-	datasource_workspaceplan "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_workspaceplan"
-	datasource_workspaceseats "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_workspaceseats"
+	datasource_workspace_plan "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_workspace_plan"
+	datasource_workspace_seats "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/datasource_workspace_seats"
 )
 
 // dataSourceFactories returns all ClickUp data sources implemented by this provider.
 var dataSourceFactories = []func() datasource.DataSource{
 	newAccessibleCustomFieldsDataSource,
-	newAlltagsfromtimeentriesDataSource,
 	newAuthorizedTeamsDataSource,
 	newAuthorizedUserDataSource,
 	newChatViewCommentsDataSource,
@@ -72,9 +71,8 @@ var dataSourceFactories = []func() datasource.DataSource{
 	newListTemplatesDataSource,
 	newListViewsDataSource,
 	newListsDataSource,
-	newRunningtimeentryDataSource,
+	newRunningTimeEntryDataSource,
 	newSharedHierarchyDataSource,
-	newSingulartimeentryDataSource,
 	newSpaceDataSource,
 	newSpaceAvailableFieldsDataSource,
 	newSpaceTagsDataSource,
@@ -86,14 +84,16 @@ var dataSourceFactories = []func() datasource.DataSource{
 	newTasksDataSource,
 	newTeamAvailableFieldsDataSource,
 	newTeamViewsDataSource,
-	newTeams1DataSource,
 	newThreadedCommentsDataSource,
-	newTimeentryhistoryDataSource,
-	newTrackedtimeDataSource,
+	newTimeEntryDataSource,
+	newTimeEntryHistoryDataSource,
+	newTimeEntryTagsDataSource,
+	newTrackedTimeDataSource,
 	newUserDataSource,
+	newUserGroupsDataSource,
 	newWebhooksDataSource,
-	newWorkspaceplanDataSource,
-	newWorkspaceseatsDataSource,
+	newWorkspacePlanDataSource,
+	newWorkspaceSeatsDataSource,
 }
 
 func newAccessibleCustomFieldsDataSource() datasource.DataSource {
@@ -101,13 +101,6 @@ func newAccessibleCustomFieldsDataSource() datasource.DataSource {
 		name:       "accessible_custom_fields",
 		path:       "/v2/list/{list_id}/field",
 		schemaFunc: datasource_accessible_custom_fields.AccessibleCustomFieldsDataSourceSchema,
-	}
-}
-func newAlltagsfromtimeentriesDataSource() datasource.DataSource {
-	return &genericDataSource{
-		name:       "alltagsfromtimeentries",
-		path:       "/v2/team/{team_id}/time_entries/tags",
-		schemaFunc: datasource_alltagsfromtimeentries.AlltagsfromtimeentriesDataSourceSchema,
 	}
 }
 func newAuthorizedTeamsDataSource() datasource.DataSource {
@@ -243,11 +236,11 @@ func newListsDataSource() datasource.DataSource {
 		schemaFunc: datasource_lists.ListsDataSourceSchema,
 	}
 }
-func newRunningtimeentryDataSource() datasource.DataSource {
+func newRunningTimeEntryDataSource() datasource.DataSource {
 	return &genericDataSource{
-		name:       "runningtimeentry",
+		name:       "running_time_entry",
 		path:       "/v2/team/{team_id}/time_entries/current",
-		schemaFunc: datasource_runningtimeentry.RunningtimeentryDataSourceSchema,
+		schemaFunc: datasource_running_time_entry.RunningTimeEntryDataSourceSchema,
 	}
 }
 func newSharedHierarchyDataSource() datasource.DataSource {
@@ -255,13 +248,6 @@ func newSharedHierarchyDataSource() datasource.DataSource {
 		name:       "shared_hierarchy",
 		path:       "/v2/team/{team_id}/shared",
 		schemaFunc: datasource_shared_hierarchy.SharedHierarchyDataSourceSchema,
-	}
-}
-func newSingulartimeentryDataSource() datasource.DataSource {
-	return &genericDataSource{
-		name:       "singulartimeentry",
-		path:       "/v2/team/{team_id}/time_entries/{timer_id}",
-		schemaFunc: datasource_singulartimeentry.SingulartimeentryDataSourceSchema,
 	}
 }
 func newSpaceDataSource() datasource.DataSource {
@@ -341,13 +327,6 @@ func newTeamViewsDataSource() datasource.DataSource {
 		schemaFunc: datasource_team_views.TeamViewsDataSourceSchema,
 	}
 }
-func newTeams1DataSource() datasource.DataSource {
-	return &genericDataSource{
-		name:       "teams1",
-		path:       "/v2/group",
-		schemaFunc: datasource_teams1.Teams1DataSourceSchema,
-	}
-}
 func newThreadedCommentsDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "threaded_comments",
@@ -355,18 +334,32 @@ func newThreadedCommentsDataSource() datasource.DataSource {
 		schemaFunc: datasource_threaded_comments.ThreadedCommentsDataSourceSchema,
 	}
 }
-func newTimeentryhistoryDataSource() datasource.DataSource {
+func newTimeEntryDataSource() datasource.DataSource {
 	return &genericDataSource{
-		name:       "timeentryhistory",
-		path:       "/v2/team/{team_id}/time_entries/{timer_id}/history",
-		schemaFunc: datasource_timeentryhistory.TimeentryhistoryDataSourceSchema,
+		name:       "time_entry",
+		path:       "/v2/team/{team_id}/time_entries/{timer_id}",
+		schemaFunc: datasource_time_entry.TimeEntryDataSourceSchema,
 	}
 }
-func newTrackedtimeDataSource() datasource.DataSource {
+func newTimeEntryHistoryDataSource() datasource.DataSource {
 	return &genericDataSource{
-		name:       "trackedtime",
+		name:       "time_entry_history",
+		path:       "/v2/team/{team_id}/time_entries/{timer_id}/history",
+		schemaFunc: datasource_time_entry_history.TimeEntryHistoryDataSourceSchema,
+	}
+}
+func newTimeEntryTagsDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "time_entry_tags",
+		path:       "/v2/team/{team_id}/time_entries/tags",
+		schemaFunc: datasource_time_entry_tags.TimeEntryTagsDataSourceSchema,
+	}
+}
+func newTrackedTimeDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "tracked_time",
 		path:       "/v2/task/{task_id}/time",
-		schemaFunc: datasource_trackedtime.TrackedtimeDataSourceSchema,
+		schemaFunc: datasource_tracked_time.TrackedTimeDataSourceSchema,
 	}
 }
 func newUserDataSource() datasource.DataSource {
@@ -376,6 +369,13 @@ func newUserDataSource() datasource.DataSource {
 		schemaFunc: datasource_user.UserDataSourceSchema,
 	}
 }
+func newUserGroupsDataSource() datasource.DataSource {
+	return &genericDataSource{
+		name:       "user_groups",
+		path:       "/v2/group",
+		schemaFunc: datasource_user_groups.UserGroupsDataSourceSchema,
+	}
+}
 func newWebhooksDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "webhooks",
@@ -383,17 +383,17 @@ func newWebhooksDataSource() datasource.DataSource {
 		schemaFunc: datasource_webhooks.WebhooksDataSourceSchema,
 	}
 }
-func newWorkspaceplanDataSource() datasource.DataSource {
+func newWorkspacePlanDataSource() datasource.DataSource {
 	return &genericDataSource{
-		name:       "workspaceplan",
+		name:       "workspace_plan",
 		path:       "/v2/team/{team_id}/plan",
-		schemaFunc: datasource_workspaceplan.WorkspaceplanDataSourceSchema,
+		schemaFunc: datasource_workspace_plan.WorkspacePlanDataSourceSchema,
 	}
 }
-func newWorkspaceseatsDataSource() datasource.DataSource {
+func newWorkspaceSeatsDataSource() datasource.DataSource {
 	return &genericDataSource{
-		name:       "workspaceseats",
+		name:       "workspace_seats",
 		path:       "/v2/team/{team_id}/seats",
-		schemaFunc: datasource_workspaceseats.WorkspaceseatsDataSourceSchema,
+		schemaFunc: datasource_workspace_seats.WorkspaceSeatsDataSourceSchema,
 	}
 }
