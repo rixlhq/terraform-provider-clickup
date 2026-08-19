@@ -70,17 +70,18 @@ func (r *webhookResource) eventsAsStrings(_ context.Context, events types.List) 
 	return out
 }
 
-func (r *webhookResource) refresh(ctx context.Context, data *webhookResourceModel, diags *diag.Diagnostics) {
+func (r *webhookResource) refresh(ctx context.Context, data *webhookResourceModel, diags *diag.Diagnostics) bool {
 	webhook, err := r.getWebhook(ctx, data.TeamId.ValueInt64(), data.WebhookId.ValueString())
 	if err != nil {
 		if errors.Is(err, errWebhookNotFound) {
 			data.WebhookId = types.StringNull()
-			return
+			return false
 		}
 		diags.AddError("ClickUp API Error", err.Error())
-		return
+		return false
 	}
 	r.mapWebhookToModel(ctx, webhook, data)
+	return true
 }
 
 func (r *webhookResource) getWebhook(ctx context.Context, teamID int64, webhookID string) (map[string]any, error) {
@@ -121,6 +122,11 @@ func (r *webhookResource) mapWebhookToModel(ctx context.Context, wh map[string]a
 	data.ClientId = stringOrNull(wh["client_id"])
 	data.Endpoint = stringOrNull(wh["endpoint"])
 	data.Health = jsonOrNull(wh["health"])
+	if h, ok := wh["health"].(map[string]any); ok {
+		data.HealthStatus = stringOrNull(h["status"])
+	} else {
+		data.HealthStatus = types.StringNull()
+	}
 	data.Secret = stringOrNull(wh["secret"])
 	data.Status = stringOrNull(wh["status"])
 	data.TaskId = stringOrNull(wh["task_id"])
@@ -189,6 +195,11 @@ func int64OrNull(v any) types.Int64 {
 		return types.Int64Value(int64(x))
 	case float64:
 		return types.Int64Value(int64(x))
+	case string:
+		i, err := strconv.ParseInt(x, 10, 64)
+		if err == nil {
+			return types.Int64Value(i)
+		}
 	}
 	return types.Int64Null()
 }

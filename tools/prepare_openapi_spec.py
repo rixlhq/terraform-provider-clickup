@@ -316,7 +316,7 @@ def uniquify_titles(spec: dict) -> None:
 
     def walk(v: any) -> None:
         if isinstance(v, dict):
-            if v.get("type") == "object" and isinstance(v.get("title"), str):
+            if normalize_type(v.get("type")) == "object" and isinstance(v.get("title"), str):
                 title = v["title"]
                 original = title
                 counter = 1
