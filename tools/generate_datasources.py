@@ -3,6 +3,7 @@
 
 import json
 import re
+import sys
 from pathlib import Path
 
 CONFIG_PATH = Path("generator_config.yml")
@@ -29,6 +30,7 @@ def main() -> None:
     for name in sorted(data_sources):
         pkg = f"datasource_{name}"
         if not Path(f"internal/provider/generated/{pkg}").exists():
+            print(f"warning: skipping data source {name!r}; generated package {pkg} is missing", file=sys.stderr)
             continue
         camel = snake_to_camel(name)
         schema_func = f"{camel}DataSourceSchema"

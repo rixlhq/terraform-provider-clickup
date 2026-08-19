@@ -114,6 +114,10 @@ def build_resources(spec: dict) -> dict:
     # tfplugingen-framework generator.
     hand_written_resources = {"folder", "user_group", "view"}
 
+    def pick(methods_for_kind):
+        # Prefer the shortest path for a given method (avoids sub-action variants).
+        return min(methods_for_kind, key=lambda x: len(x["path"]))
+
     resources = {}
     for base, methods in groups.items():
         # A full Terraform resource needs create, read, update, and delete.
@@ -124,21 +128,19 @@ def build_resources(spec: dict) -> dict:
         if "delete" not in methods:
             continue
 
-        name = data_source_name(resource_base(next(iter(methods["get"]))["op_id"]))
+        create = pick(methods["post"])
+        read = pick(methods["get"])
+        update = pick(methods.get("patch") or methods["put"])
+        delete_op = pick(methods["delete"])
+
+        # Derive the name from the selected read operation, not the first GET in
+        # the group, and avoid double-stripping read prefixes.
+        name = data_source_name(read["op_id"])
         if not name:
             name = camel_to_snake(base).strip("_")
 
         if name in hand_written_resources:
             continue
-
-        def pick(methods_for_kind):
-            # Prefer the shortest path for a given method (avoids sub-action variants).
-            return min(methods_for_kind, key=lambda x: len(x["path"]))
-
-        create = pick(methods["post"])
-        read = pick(methods["get"])
-        update = pick(methods.get("patch") or methods["put"])
-        delete_op = pick(methods["delete"])
 
         resources[name] = {
             "create": {

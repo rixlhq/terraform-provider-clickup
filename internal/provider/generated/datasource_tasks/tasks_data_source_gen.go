@@ -275,7 +275,20 @@ func TasksDataSourceSchema(ctx context.Context) schema.Schema {
 							Computed: true,
 						},
 						"folder": schema.SingleNestedAttribute{
-							Attributes: map[string]schema.Attribute{},
+							Attributes: map[string]schema.Attribute{
+								"access": schema.BoolAttribute{
+									Computed: true,
+								},
+								"hidden": schema.BoolAttribute{
+									Computed: true,
+								},
+								"id": schema.StringAttribute{
+									Computed: true,
+								},
+								"name": schema.StringAttribute{
+									Computed: true,
+								},
+							},
 							CustomType: FolderType{
 								ObjectType: types.ObjectType{
 									AttrTypes: FolderValue{}.AttributeTypes(ctx),
@@ -5485,12 +5498,90 @@ func (t FolderType) String() string {
 func (t FolderType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	attributes := in.Attributes()
+
+	accessAttribute, ok := attributes["access"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`access is missing from object`)
+
+		return nil, diags
+	}
+
+	accessVal, ok := accessAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`access expected to be basetypes.BoolValue, was: %T`, accessAttribute))
+	}
+
+	hiddenAttribute, ok := attributes["hidden"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`hidden is missing from object`)
+
+		return nil, diags
+	}
+
+	hiddenVal, ok := hiddenAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`hidden expected to be basetypes.BoolValue, was: %T`, hiddenAttribute))
+	}
+
+	idAttribute, ok := attributes["id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`id is missing from object`)
+
+		return nil, diags
+	}
+
+	idVal, ok := idAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
+	}
+
+	nameAttribute, ok := attributes["name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`name is missing from object`)
+
+		return nil, diags
+	}
+
+	nameVal, ok := nameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
+	}
+
 	if diags.HasError() {
 		return nil, diags
 	}
 
 	return FolderValue{
-		state: attr.ValueStateKnown,
+		Access: accessVal,
+		Hidden: hiddenVal,
+		Id:     idVal,
+		Name:   nameVal,
+		state:  attr.ValueStateKnown,
 	}, diags
 }
 
@@ -5557,12 +5648,88 @@ func NewFolderValue(attributeTypes map[string]attr.Type, attributes map[string]a
 		return NewFolderValueUnknown(), diags
 	}
 
+	accessAttribute, ok := attributes["access"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`access is missing from object`)
+
+		return NewFolderValueUnknown(), diags
+	}
+
+	accessVal, ok := accessAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`access expected to be basetypes.BoolValue, was: %T`, accessAttribute))
+	}
+
+	hiddenAttribute, ok := attributes["hidden"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`hidden is missing from object`)
+
+		return NewFolderValueUnknown(), diags
+	}
+
+	hiddenVal, ok := hiddenAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`hidden expected to be basetypes.BoolValue, was: %T`, hiddenAttribute))
+	}
+
+	idAttribute, ok := attributes["id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`id is missing from object`)
+
+		return NewFolderValueUnknown(), diags
+	}
+
+	idVal, ok := idAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
+	}
+
+	nameAttribute, ok := attributes["name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`name is missing from object`)
+
+		return NewFolderValueUnknown(), diags
+	}
+
+	nameVal, ok := nameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
+	}
+
 	if diags.HasError() {
 		return NewFolderValueUnknown(), diags
 	}
 
 	return FolderValue{
-		state: attr.ValueStateKnown,
+		Access: accessVal,
+		Hidden: hiddenVal,
+		Id:     idVal,
+		Name:   nameVal,
+		state:  attr.ValueStateKnown,
 	}, diags
 }
 
@@ -5634,17 +5801,61 @@ func (t FolderType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = FolderValue{}
 
 type FolderValue struct {
-	state attr.ValueState
+	Access basetypes.BoolValue   `tfsdk:"access"`
+	Hidden basetypes.BoolValue   `tfsdk:"hidden"`
+	Id     basetypes.StringValue `tfsdk:"id"`
+	Name   basetypes.StringValue `tfsdk:"name"`
+	state  attr.ValueState
 }
 
 func (v FolderValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 0)
+	attrTypes := make(map[string]tftypes.Type, 4)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["access"] = basetypes.BoolType{}.TerraformType(ctx)
+	attrTypes["hidden"] = basetypes.BoolType{}.TerraformType(ctx)
+	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 0)
+		vals := make(map[string]tftypes.Value, 4)
+
+		val, err = v.Access.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["access"] = val
+
+		val, err = v.Hidden.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["hidden"] = val
+
+		val, err = v.Id.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["id"] = val
+
+		val, err = v.Name.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["name"] = val
 
 		if err := tftypes.ValidateValue(objectType, vals); err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
@@ -5675,7 +5886,12 @@ func (v FolderValue) String() string {
 func (v FolderValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	attributeTypes := map[string]attr.Type{}
+	attributeTypes := map[string]attr.Type{
+		"access": basetypes.BoolType{},
+		"hidden": basetypes.BoolType{},
+		"id":     basetypes.StringType{},
+		"name":   basetypes.StringType{},
+	}
 
 	if v.IsNull() {
 		return types.ObjectNull(attributeTypes), diags
@@ -5687,7 +5903,12 @@ func (v FolderValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
-		map[string]attr.Value{})
+		map[string]attr.Value{
+			"access": v.Access,
+			"hidden": v.Hidden,
+			"id":     v.Id,
+			"name":   v.Name,
+		})
 
 	return objVal, diags
 }
@@ -5707,6 +5928,22 @@ func (v FolderValue) Equal(o attr.Value) bool {
 		return true
 	}
 
+	if !v.Access.Equal(other.Access) {
+		return false
+	}
+
+	if !v.Hidden.Equal(other.Hidden) {
+		return false
+	}
+
+	if !v.Id.Equal(other.Id) {
+		return false
+	}
+
+	if !v.Name.Equal(other.Name) {
+		return false
+	}
+
 	return true
 }
 
@@ -5719,7 +5956,12 @@ func (v FolderValue) Type(ctx context.Context) attr.Type {
 }
 
 func (v FolderValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
-	return map[string]attr.Type{}
+	return map[string]attr.Type{
+		"access": basetypes.BoolType{},
+		"hidden": basetypes.BoolType{},
+		"id":     basetypes.StringType{},
+		"name":   basetypes.StringType{},
+	}
 }
 
 var _ basetypes.ObjectTypable = ListType{}
