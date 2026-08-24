@@ -16,12 +16,12 @@ import (
 // POST /v2/task/{task_id}/checklist (create)
 // PUT  /v2/checklist/{checklist_id} (update)
 // DELETE /v2/checklist/{checklist_id} (delete)
-// No single-GET; read from task checklists list.
+// No GET on checklist endpoint; read from task GET (checklists array).
 func newTaskChecklistResource() resource.Resource {
 	return &genericResource{
 		name:               "task_checklist",
 		createPath:         "/v2/task/{task_id}/checklist",
-		readPath:           "/v2/task/{task_id}/checklist",
+		readPath:           "/v2/task/{task_id}",
 		updatePath:         "/v2/checklist/{checklist_id}",
 		deletePath:         "/v2/checklist/{checklist_id}",
 		updateMethod:       "put",
@@ -32,7 +32,6 @@ func newTaskChecklistResource() resource.Resource {
 		readListRoot:       "checklists",
 		readListIDField:    "id",
 		createResponseRoot: "checklist",
-		readResponseRoot:   "checklist",
 		schemaFunc:         taskChecklistSchema,
 	}
 }
@@ -68,11 +67,13 @@ func taskChecklistSchema(_ context.Context) schema.Schema {
 // POST /v2/checklist/{checklist_id}/checklist_item (create)
 // PUT  /v2/checklist/{checklist_id}/checklist_item/{checklist_item_id} (update)
 // DELETE /v2/checklist/{checklist_id}/checklist_item/{checklist_item_id} (delete)
+// No GET on checklist_item; read from task GET -> checklists -> items.
+// Create response wraps the item inside { "checklist": { "items": [...] } }.
 func newChecklistItemResource() resource.Resource {
 	return &genericResource{
 		name:               "checklist_item",
 		createPath:         "/v2/checklist/{checklist_id}/checklist_item",
-		readPath:           "/v2/checklist/{checklist_id}/checklist_item",
+		readPath:           "/v2/task/{task_id}",
 		updatePath:         "/v2/checklist/{checklist_id}/checklist_item/{checklist_item_id}",
 		deletePath:         "/v2/checklist/{checklist_id}/checklist_item/{checklist_item_id}",
 		updateMethod:       "put",
@@ -80,10 +81,9 @@ func newChecklistItemResource() resource.Resource {
 		updateBodyFields:   []string{"name", "assignee", "resolved", "parent"},
 		idField:            "checklist_item_id",
 		readFromList:       true,
-		readListRoot:       "items",
+		readListRoot:       "checklists.items",
 		readListIDField:    "id",
-		createResponseRoot: "item",
-		readResponseRoot:   "item",
+		createResponseRoot: "checklist",
 		schemaFunc:         checklistItemSchema,
 	}
 }
@@ -99,6 +99,12 @@ func checklistItemSchema(_ context.Context) schema.Schema {
 				},
 			},
 			"checklist_id": schema.StringAttribute{
+				Required: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"task_id": schema.StringAttribute{
 				Required: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -142,7 +148,6 @@ func newKeyResultResource() resource.Resource {
 		readListRoot:       "goal.key_results",
 		readListIDField:    "id",
 		createResponseRoot: "key_result",
-		readResponseRoot:   "key_result",
 		schemaFunc:         keyResultSchema,
 	}
 }
@@ -217,6 +222,9 @@ func keyResultSchema(_ context.Context) schema.Schema {
 // POST /v2/task/{task_id}/time (create)
 // PUT  /v2/task/{task_id}/time/{interval_id} (update)
 // DELETE /v2/task/{task_id}/time/{interval_id} (delete)
+// The GET response nests intervals inside data[].intervals[], which the
+// generic list reader cannot traverse. Read returns state as-is; drift
+// is detected on the next plan when the task is refreshed.
 func newTaskTimeResource() resource.Resource {
 	return &genericResource{
 		name:             "task_time",
@@ -228,9 +236,6 @@ func newTaskTimeResource() resource.Resource {
 		createBodyFields: []string{"start", "end", "time"},
 		updateBodyFields: []string{"start", "end", "time"},
 		idField:          "interval_id",
-		readFromList:     true,
-		readListRoot:     "data",
-		readListIDField:  "id",
 		schemaFunc:       taskTimeSchema,
 	}
 }
@@ -343,80 +348,17 @@ func timeEntrySchema(_ context.Context) schema.Schema {
 }
 
 // --- time_entry_tag ---
-// POST   /v2/team/{team_id}/time_entries/tags (create)
-// PUT    /v2/team/{team_id}/time_entries/tags (update by name)
-// GET    /v2/team/{team_id}/time_entries/tags (list)
-// DELETE /v2/team/{team_id}/time_entries/tags (delete by name)
-func newTimeEntryTagResource() resource.Resource {
-	return &genericResource{
-		name:             "time_entry_tag",
-		createPath:       "/v2/team/{team_id}/time_entries/tags",
-		readPath:         "/v2/team/{team_id}/time_entries/tags",
-		updatePath:       "/v2/team/{team_id}/time_entries/tags",
-		deletePath:       "/v2/team/{team_id}/time_entries/tags",
-		updateMethod:     "put",
-		createBodyFields: []string{"name", "tag_bg", "tag_fg"},
-		updateBodyFields: []string{"name", "new_name", "tag_bg", "tag_fg"},
-		idField:          "tag_name",
-		readFromList:     true,
-		readListRoot:     "tags",
-		readListIDField:  "name",
-		idFromBody:       []string{"name"},
-		schemaFunc:       timeEntryTagSchema,
-	}
-}
-
-func timeEntryTagSchema(_ context.Context) schema.Schema {
-	return schema.Schema{
-		MarkdownDescription: "Manages a time tracking tag on a ClickUp team.",
-		Attributes: map[string]schema.Attribute{
-			"tag_name": schema.StringAttribute{
-				Computed: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"team_id": schema.StringAttribute{
-				Required: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-			},
-			"name": schema.StringAttribute{
-				Required: true,
-			},
-			"new_name": schema.StringAttribute{
-				Optional: true,
-			},
-			"tag_bg": schema.StringAttribute{
-				Required: true,
-			},
-			"tag_fg": schema.StringAttribute{
-				Required: true,
-			},
-		},
-	}
-}
+// REMOVED: The /time_entries/tags endpoint is not standard CRUD.
+// POST/DELETE assign/remove tags to/from time entries (requires
+// time_entry_ids + tags arrays), not standalone tag creation.
+// PUT renames a tag. GET lists tags under "data", not "tags".
+// These are two different operations that don't fit a single Terraform
+// resource. Use time_entry's "tags" field for tag assignment, and
+// a future time_entry_tag_rename resource for the PUT rename operation.
 
 // --- team_guest ---
-// POST   /v2/team/{team_id}/guest (create/invite)
-// GET    /v2/team/{team_id}/guest/{guest_id} (read)
-// PUT    /v2/team/{team_id}/guest/{guest_id} (update)
-// DELETE /v2/team/{team_id}/guest/{guest_id} (delete)
-func newTeamGuestResource() resource.Resource {
-	return &genericResource{
-		name:             "team_guest",
-		createPath:       "/v2/team/{team_id}/guest",
-		readPath:         "/v2/team/{team_id}/guest/{guest_id}",
-		updatePath:       "/v2/team/{team_id}/guest/{guest_id}",
-		deletePath:       "/v2/team/{team_id}/guest/{guest_id}",
-		updateMethod:     "put",
-		createBodyFields: []string{"email", "can_edit_tags", "can_see_time_spent", "can_see_time_estimated", "can_create_views", "can_see_points_estimated", "custom_role_id"},
-		updateBodyFields: []string{"can_edit_tags", "can_see_time_spent", "can_see_time_estimated", "can_create_views", "can_see_points_estimated", "custom_role_id"},
-		idField:          "guest_id",
-		schemaFunc:       teamGuestSchema,
-	}
-}
+// Hand-written in team_invite_resources.go — the invite POST returns
+// { "team": { "members": [...] } } with no top-level guest_id.
 
 func teamGuestSchema(_ context.Context) schema.Schema {
 	return schema.Schema{
@@ -469,24 +411,7 @@ func teamGuestSchema(_ context.Context) schema.Schema {
 }
 
 // --- team_user ---
-// POST   /v2/team/{team_id}/user (create/invite)
-// GET    /v2/team/{team_id}/user/{user_id} (read)
-// PUT    /v2/team/{team_id}/user/{user_id} (update)
-// DELETE /v2/team/{team_id}/user/{user_id} (delete)
-func newTeamUserResource() resource.Resource {
-	return &genericResource{
-		name:             "team_user",
-		createPath:       "/v2/team/{team_id}/user",
-		readPath:         "/v2/team/{team_id}/user/{user_id}",
-		updatePath:       "/v2/team/{team_id}/user/{user_id}",
-		deletePath:       "/v2/team/{team_id}/user/{user_id}",
-		updateMethod:     "put",
-		createBodyFields: []string{"email", "admin", "custom_role_id"},
-		updateBodyFields: []string{"username", "admin", "custom_role_id"},
-		idField:          "user_id",
-		schemaFunc:       teamUserSchema,
-	}
-}
+// Hand-written in team_invite_resources.go — same team.members structure.
 
 func teamUserSchema(_ context.Context) schema.Schema {
 	return schema.Schema{
@@ -526,47 +451,7 @@ func teamUserSchema(_ context.Context) schema.Schema {
 }
 
 // --- team_view ---
-// POST /v2/team/{team_id}/view (create)
-// GET/PUT/DELETE /v2/view/{view_id} (read/update/delete)
-func newTeamViewResource() resource.Resource {
-	return &genericResource{
-		name:               "team_view",
-		createPath:         "/v2/team/{team_id}/view",
-		readPath:           "/v2/view/{view_id}",
-		updatePath:         "/v2/view/{view_id}",
-		deletePath:         "/v2/view/{view_id}",
-		updateMethod:       "put",
-		createBodyFields:   []string{"name", "type", "grouping", "divide", "sorting", "filters", "columns", "team_sidebar", "settings"},
-		updateBodyFields:   []string{"name", "type", "grouping", "divide", "sorting", "filters", "columns", "team_sidebar", "settings"},
-		idField:            "view_id",
-		createResponseRoot: "view",
-		readResponseRoot:   "view",
-		schemaFunc:         teamViewSchema,
-	}
-}
-
-func teamViewSchema(_ context.Context) schema.Schema {
-	return schema.Schema{
-		MarkdownDescription: "Manages a team-level view in ClickUp.",
-		Attributes: map[string]schema.Attribute{
-			"view_id": schema.StringAttribute{
-				Computed: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"team_id": schema.StringAttribute{
-				Required: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-			},
-			"name": schema.StringAttribute{
-				Required: true,
-			},
-			"type": schema.StringAttribute{
-				Required: true,
-			},
-		},
-	}
-}
+// REMOVED: The existing "view" resource already creates at /v2/team/{team_id}/view
+// and manages via /v2/view/{view_id}. team_view was a duplicate with an
+// incomplete schema (missing grouping, divide, sorting, filters, columns,
+// team_sidebar, settings). Use the "view" resource instead.

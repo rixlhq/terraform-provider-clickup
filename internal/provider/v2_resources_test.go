@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -18,6 +19,8 @@ func TestAccTaskChecklist_basic(t *testing.T) {
 
 	name := "my-checklist"
 
+	var clPos int64
+	var clMu sync.Mutex
 	ts.Register("POST", "/v2/task/123/checklist", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		body, _ := json.Marshal(map[string]any{
@@ -29,14 +32,19 @@ func TestAccTaskChecklist_basic(t *testing.T) {
 		})
 		_, _ = w.Write(body)
 	})
-	ts.Register("GET", "/v2/task/123/checklist", func(w http.ResponseWriter, _ *http.Request) {
+	ts.Register("GET", "/v2/task/123", func(w http.ResponseWriter, _ *http.Request) {
+		clMu.Lock()
+		pos := clPos
+		clMu.Unlock()
 		w.WriteHeader(http.StatusOK)
 		body, _ := json.Marshal(map[string]any{
+			"id":   "123",
+			"name": "test-task",
 			"checklists": []any{
 				map[string]any{
 					"id":       "cl1",
 					"name":     name,
-					"position": 0,
+					"position": pos,
 				},
 			},
 		})
@@ -45,6 +53,11 @@ func TestAccTaskChecklist_basic(t *testing.T) {
 	ts.Register("PUT", "/v2/checklist/cl1", func(w http.ResponseWriter, r *http.Request) {
 		var payload map[string]any
 		_ = json.NewDecoder(r.Body).Decode(&payload)
+		clMu.Lock()
+		if p, ok := payload["position"].(float64); ok {
+			clPos = int64(p)
+		}
+		clMu.Unlock()
 		if n, ok := payload["name"].(string); ok {
 			name = n
 		}
@@ -53,7 +66,7 @@ func TestAccTaskChecklist_basic(t *testing.T) {
 			"checklist": map[string]any{
 				"id":       "cl1",
 				"name":     name,
-				"position": 0,
+				"position": clPos,
 			},
 		})
 		_, _ = w.Write(body)
@@ -301,7 +314,12 @@ func TestAccKeyResult_basic(t *testing.T) {
 		})
 		_, _ = w.Write(body)
 	})
+	krCurrent := 0
+	var krMu sync.Mutex
 	ts.Register("GET", "/v2/goal/123", func(w http.ResponseWriter, _ *http.Request) {
+		krMu.Lock()
+		current := krCurrent
+		krMu.Unlock()
 		w.WriteHeader(http.StatusOK)
 		body, _ := json.Marshal(map[string]any{
 			"goal": map[string]any{
@@ -313,7 +331,7 @@ func TestAccKeyResult_basic(t *testing.T) {
 						"type":          "number",
 						"steps_start":   0,
 						"steps_end":     100,
-						"steps_current": 50,
+						"steps_current": current,
 						"unit":          "%",
 					},
 				},
@@ -322,6 +340,9 @@ func TestAccKeyResult_basic(t *testing.T) {
 		_, _ = w.Write(body)
 	})
 	ts.Register("PUT", "/v2/key_result/kr1", func(w http.ResponseWriter, _ *http.Request) {
+		krMu.Lock()
+		krCurrent = 75
+		krMu.Unlock()
 		w.WriteHeader(http.StatusOK)
 		body, _ := json.Marshal(map[string]any{
 			"key_result": map[string]any{

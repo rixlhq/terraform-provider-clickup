@@ -23,7 +23,7 @@ func TestAccChatChannel_basic(t *testing.T) {
 	channelJSON := func() string {
 		mu.Lock()
 		defer mu.Unlock()
-		return fmt.Sprintf(`{"data":{"id":"ch-1","name":%q,"description":%q,"topic":"","visibility":"PUBLIC","type":"CHANNEL","parent":{"id":"","type":0},"creator":"u1","created_at":"2026-01-01T00:00:00Z","updated_at":"2026-01-01T00:00:00Z","workspace_id":"123","archived":false,"links":{"members":"","followers":""}}}`, currentName, currentDesc)
+		return fmt.Sprintf(`{"data":{"id":"ch-1","name":%q,"description":%q,"topic":null,"visibility":"PUBLIC","type":"CHANNEL","parent":{"id":"","type":0},"creator":"u1","created_at":"2026-01-01T00:00:00Z","updated_at":"2026-01-01T00:00:00Z","workspace_id":"123","archived":false,"links":{"members":"","followers":""}}}`, currentName, currentDesc)
 	}
 
 	registerChatChannelHandlers(ts, base, channelJSON)

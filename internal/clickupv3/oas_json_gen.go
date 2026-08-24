@@ -12066,6 +12066,10 @@ func (o *OptString) Decode(d *jx.Decoder) error {
 	if o == nil {
 		return errors.New("invalid: unable to decode OptString to nil")
 	}
+	// Handle null: leave as unset (Set=false, Value="").
+	if t := d.Next(); t == jx.Null {
+		return d.Null()
+	}
 	o.Set = true
 	v, err := d.Str()
 	if err != nil {

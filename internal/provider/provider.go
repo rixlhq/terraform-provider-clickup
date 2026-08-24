@@ -129,10 +129,8 @@ func (p *ClickUpProvider) Resources(ctx context.Context) []func() resource.Resou
 		newKeyResultResource,
 		newTaskTimeResource,
 		newTimeEntryResource,
-		newTimeEntryTagResource,
 		newTeamGuestResource,
 		newTeamUserResource,
-		newTeamViewResource,
 		newCommentReplyResource,
 	)
 }

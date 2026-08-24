@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -293,24 +294,37 @@ func (r *chatChannelResource) Delete(ctx context.Context, req resource.DeleteReq
 		return
 	}
 
-	if v, ok := res.(*clickupv3.ChatPublicApiErrorResponseStatusCode); ok && v.StatusCode == http.StatusNotFound {
+	if v, ok := res.(*clickupv3.ChatPublicApiErrorResponseStatusCode); ok {
+		if v.StatusCode == http.StatusNotFound {
+			return
+		}
+		resp.Diagnostics.AddError("ClickUp V3 API Error",
+			fmt.Sprintf("delete chat channel failed with status %d", v.StatusCode))
 		return
 	}
 }
 
 func (r *chatChannelResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("workspace_id"), req.ID)...)
+	// Import format: workspace_id:channel_id
+	parts := strings.SplitN(req.ID, ":", 2)
+	if len(parts) != 2 {
+		resp.Diagnostics.AddError("Invalid Import ID",
+			"expected format: workspace_id:channel_id")
+		return
+	}
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("workspace_id"), parts[0])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("channel_id"), parts[1])...)
 }
 
 func (r *chatChannelResource) applyChannelToModel(m *chatChannelModel, ch clickupv3.ChatChannel) {
 	m.ChannelID = types.StringValue(ch.ID)
 	m.Name = types.StringValue(ch.Name)
-	if ch.Description.IsSet() && ch.Description.Value != "" {
+	if ch.Description.IsSet() {
 		m.Description = types.StringValue(ch.Description.Value)
 	} else {
 		m.Description = types.StringNull()
 	}
-	if ch.Topic.IsSet() && ch.Topic.Value != "" {
+	if ch.Topic.IsSet() {
 		m.Topic = types.StringValue(ch.Topic.Value)
 	} else {
 		m.Topic = types.StringNull()
