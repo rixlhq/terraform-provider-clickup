@@ -39,22 +39,26 @@ This project uses `mise`. The common tasks are defined in `mise.toml`:
    - Generate `internal/clickupapi` from a cleaned OpenAPI 3.1 spec (`ClickUp_PUBLIC_API_V2.prepared.json`) using `oapi-codegen` or `ogen`. Spike both; choose the one that needs the least hand-patching.
    - Add client unit tests.
    - Refactor `clickupclient.Client` into a thin wrapper around the generated client (or keep the existing interface and delegate).
-   - **Spike findings (2026-08-24):** oapi-codegen v1.16.3 fails on OpenAPI 3.1
-     `null` type (`unhandled Schema type: null`). ogen v1.24.0 fails on the raw
-     spec (`multiple types not supported: [string, number]`) and only works on
-     the prepared spec with `ignore_not_implemented: ["all"]`, producing 252K
-     lines across 21 files with 138 of 413 operations skipped and critical
-     schemas (views, custom_fields values) falling back to `any`. Neither
-     generator eliminates `prepare_openapi_spec.py` — both still need it for
-     type-array/null/path-local-`$ref` normalization (the V2 spec has 0
-     component schemas and 79 path-local `$ref`s). ogen adds heavy deps
-     (opentelemetry, go-faster/*). Conclusion: a generated typed client is not
-     a win for the current dynamic/generic architecture (126-line
-     `clickupclient` returning `[]byte` + `genericResource` decoding to
-     `map[string]any`). It only pays off as part of a full rewrite to typed
-     per-resource implementations (PR-2+PR-3 combined). If proceeding, ogen is
-     the only viable option; oapi-codegen would need its own 3.1 patching
-     layer on top of the existing spec prep.
+   - **Spike findings (2026-08-24):** ClickUp ships two separate API surfaces:
+     - **V2** (`ClickUp_PUBLIC_API_V2.json`, OpenAPI 3.1, 83 paths, 0 component
+       schemas, 79 path-local `$ref`s): the current provider surface. oapi-codegen
+       fails on 3.1 `null` type. ogen fails on the raw spec and only works on the
+       prepared spec with `ignore_not_implemented: ["all"]`, producing 252K lines
+       with 138/413 ops skipped and critical schemas (views, custom_fields) as
+       `any`. Neither eliminates `prepare_openapi_spec.py`. A generated typed
+       client is not a win for the current dynamic/generic V2 architecture.
+     - **V3** (`ClickUp_PUBLIC_API_V3.yaml`, OpenAPI 3.0, 23 paths, 228
+       component schemas): chat, docs, audit logs, ACLs, attachments — not
+       implemented yet. ogen generates cleanly from the raw spec with no
+       preparation: 66K lines, 35/35 client operations, only 8 `any` types out
+       of 156 schemas. Typed structs with getters (e.g.
+       `ChatCreateChatChannel{Name, Description OptString, UserIds []string}`).
+   - **Recommendation:** keep the hand-written dynamic client for V2 (it fits
+     the generic-resource architecture); generate a typed client with ogen for
+     V3 only, where the spec is clean and the API surface is new. Add V3
+     resources/data sources (chat channels, docs, audit logs) backed by the
+     generated `internal/clickupv3` client. Re-evaluate oapi-codegen if V3
+     grows 3.1 features.
 3. **PR-3: Complete remaining resources and data sources**
    - Use `tools/audit_coverage.py` to drive coverage of the 57 missing endpoints.
    - Add generic and hand-written resources, with acceptance tests for each.
