@@ -3,17 +3,17 @@ pre-commit:
   commands:
     lint:
       glob: "*.{go}"
-      run: mise exec golangci-lint@2.12.2 -- golangci-lint run --new
+      run: golangci-lint run --new
       stage_fixed: true
     format:
       glob: "*.{go}"
-      run: mise exec go@1.26.5 -- gofmt -s -w {staged_files}
+      run: gofmt -s -w {staged_files}
       stage_fixed: true
 
 pre-push:
   parallel: true
   commands:
     test:
-      run: mise exec go@1.26.5 -- go test -v -cover -timeout=120s -parallel=10 ./...
+      run: mise run test
     build:
-      run: mise exec go@1.26.5 -- go build -v ./...
+      run: mise run build
