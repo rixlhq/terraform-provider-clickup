@@ -7,6 +7,7 @@ lefthook = "2.1.10"
 "go:github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs" = "v0.25.0"
 "go:github.com/hashicorp/terraform-plugin-codegen-openapi/cmd/tfplugingen-openapi" = "v0.3.0"
 "go:github.com/hashicorp/terraform-plugin-codegen-framework/cmd/tfplugingen-framework" = "v0.4.1"
+"go:github.com/ogen-go/ogen/cmd/ogen" = "v1.24.0"
 
 [hooks]
 postinstall = "lefthook install"
@@ -58,6 +59,10 @@ run = [
 [tasks.docs]
 description = "Generate Terraform Registry docs from the ClickUp OpenAPI spec"
 run = ["tfplugindocs generate"]
+
+[tasks.generate-v3]
+description = "Generate the typed V3 API client from ClickUp_PUBLIC_API_V3.yaml using ogen"
+run = ["ogen --target internal/clickupv3 --package clickupv3 --config internal/clickupv3/ogen.yml ClickUp_PUBLIC_API_V3.yaml"]
 
 [tasks.default]
 description = "Default local development check"
