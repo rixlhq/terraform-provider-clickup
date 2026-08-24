@@ -43,9 +43,10 @@ signs:
 release:
   mode: keep-existing
   replace_existing_artifacts: true
-  # Release is created as draft by release-please; we publish it in the
-  # workflow after goreleaser uploads all artifacts.
-  draft: true
+  # Release is created as draft by release-please. Goreleaser adopts the
+  # existing draft, uploads artifacts, then the workflow publishes it.
+  use_existing_draft: true
+  draft: false
   extra_files:
     - glob: 'terraform-registry-manifest.json'
       name_template: '{{ .ProjectName }}_{{ .Version }}_manifest.json'

@@ -66,6 +66,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${{ inputs.tag || needs.release-please.outputs.tag_name }}"
-          # Goreleaser uploaded artifacts to the draft release created by
-          # release-please. Now publish it so users see a complete release.
-          gh release edit "$TAG" --draft=false
+          # Goreleaser should have published the draft via use_existing_draft.
+          # This is a fallback in case it didn't.
+          if gh release view "$TAG" --json isDraft --jq '.isDraft' | grep -q true; then
+            gh release edit "$TAG" --draft=false
+          fi
