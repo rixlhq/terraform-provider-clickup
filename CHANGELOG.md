@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/rixlhq/terraform-provider-clickup/compare/v0.3.0...v0.3.1) (2026-08-24)
+
+
+### Bug Fixes
+
+* **release:** use_existing_draft to prevent duplicate releases ([8112ec5](https://github.com/rixlhq/terraform-provider-clickup/commit/8112ec59c4559a13f4b3c41671ba3ef070392324))
+
 ## [0.3.0](https://github.com/rixlhq/terraform-provider-clickup/compare/v0.2.0...v0.3.0) (2026-08-24)
 
 
