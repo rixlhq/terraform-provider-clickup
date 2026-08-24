@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.0](https://github.com/rixlhq/terraform-provider-clickup/compare/v0.1.1...v0.2.0) (2026-08-24)
+
+
+### Features
+
+* **v3:** generate ogen V3 client and add chat_channel resource + audit_logs data source ([e58c180](https://github.com/rixlhq/terraform-provider-clickup/commit/e58c18017cf7bdbaf9d22855ff6721d470bfb9d3))
+
+
+### Bug Fixes
+
+* **v3:** handle HTTP 204 empty body, fix lint, add tests and docs ([a0bb889](https://github.com/rixlhq/terraform-provider-clickup/commit/a0bb889d933c198465b3f26aedbadcc96455ba32))
+
 ## [0.1.1](https://github.com/rixlhq/terraform-provider-clickup/compare/v0.1.0...v0.1.1) (2026-08-24)
 
 
