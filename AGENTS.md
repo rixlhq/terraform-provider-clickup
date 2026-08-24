@@ -39,6 +39,22 @@ This project uses `mise`. The common tasks are defined in `mise.toml`:
    - Generate `internal/clickupapi` from a cleaned OpenAPI 3.1 spec (`ClickUp_PUBLIC_API_V2.prepared.json`) using `oapi-codegen` or `ogen`. Spike both; choose the one that needs the least hand-patching.
    - Add client unit tests.
    - Refactor `clickupclient.Client` into a thin wrapper around the generated client (or keep the existing interface and delegate).
+   - **Spike findings (2026-08-24):** oapi-codegen v1.16.3 fails on OpenAPI 3.1
+     `null` type (`unhandled Schema type: null`). ogen v1.24.0 fails on the raw
+     spec (`multiple types not supported: [string, number]`) and only works on
+     the prepared spec with `ignore_not_implemented: ["all"]`, producing 252K
+     lines across 21 files with 138 of 413 operations skipped and critical
+     schemas (views, custom_fields values) falling back to `any`. Neither
+     generator eliminates `prepare_openapi_spec.py` — both still need it for
+     type-array/null/path-local-`$ref` normalization (the V2 spec has 0
+     component schemas and 79 path-local `$ref`s). ogen adds heavy deps
+     (opentelemetry, go-faster/*). Conclusion: a generated typed client is not
+     a win for the current dynamic/generic architecture (126-line
+     `clickupclient` returning `[]byte` + `genericResource` decoding to
+     `map[string]any`). It only pays off as part of a full rewrite to typed
+     per-resource implementations (PR-2+PR-3 combined). If proceeding, ogen is
+     the only viable option; oapi-codegen would need its own 3.1 patching
+     layer on top of the existing spec prep.
 3. **PR-3: Complete remaining resources and data sources**
    - Use `tools/audit_coverage.py` to drive coverage of the 57 missing endpoints.
    - Add generic and hand-written resources, with acceptance tests for each.
