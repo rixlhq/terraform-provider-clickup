@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -196,7 +197,7 @@ func (r *chatChannelResource) Read(ctx context.Context, req resource.ReadRequest
 		r.applyChannelToModel(&state, v.Data)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 	case *clickupv3.ChatPublicApiErrorResponseStatusCode:
-		if v.StatusCode == 404 {
+		if v.StatusCode == http.StatusNotFound {
 			resp.State.RemoveResource(ctx)
 			return
 		}
@@ -291,7 +292,7 @@ func (r *chatChannelResource) Delete(ctx context.Context, req resource.DeleteReq
 		return
 	}
 
-	if v, ok := res.(*clickupv3.ChatPublicApiErrorResponseStatusCode); ok && v.StatusCode == 404 {
+	if v, ok := res.(*clickupv3.ChatPublicApiErrorResponseStatusCode); ok && v.StatusCode == http.StatusNotFound {
 		return
 	}
 }
@@ -303,11 +304,15 @@ func (r *chatChannelResource) ImportState(ctx context.Context, req resource.Impo
 func (r *chatChannelResource) applyChannelToModel(m *chatChannelModel, ch clickupv3.ChatChannel) {
 	m.ChannelID = types.StringValue(ch.ID)
 	m.Name = types.StringValue(ch.Name)
-	if ch.Description.IsSet() {
+	if ch.Description.IsSet() && ch.Description.Value != "" {
 		m.Description = types.StringValue(ch.Description.Value)
+	} else {
+		m.Description = types.StringNull()
 	}
-	if ch.Topic.IsSet() {
+	if ch.Topic.IsSet() && ch.Topic.Value != "" {
 		m.Topic = types.StringValue(ch.Topic.Value)
+	} else {
+		m.Topic = types.StringNull()
 	}
 	m.Visibility = types.StringValue(string(ch.Visibility))
 	m.Creator = types.StringValue(ch.Creator)

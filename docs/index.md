@@ -23,4 +23,5 @@ provider "clickup" {
 ### Optional
 
 - `api_token` (String, Sensitive) ClickUp API token. Can be set via the `CLICKUP_API_TOKEN` environment variable.
-- `base_url` (String) Override the ClickUp API base URL. Can be set via the `CLICKUP_BASE_URL` environment variable. Defaults to `https://api.clickup.com/api`.
+- `base_url` (String) Override the ClickUp V2 API base URL. Can be set via the `CLICKUP_BASE_URL` environment variable. Defaults to `https://api.clickup.com/api`.
+- `v3_base_url` (String) Override the ClickUp V3 API base URL. Can be set via the `CLICKUP_V3_BASE_URL` environment variable. Defaults to `https://api.clickup.com/`.
