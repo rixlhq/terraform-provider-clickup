@@ -60,3 +60,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
+
+      - name: Publish draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ inputs.tag || needs.release-please.outputs.tag_name }}"
+          # Goreleaser uploaded artifacts to the draft release created by
+          # release-please. Now publish it so users see a complete release.
+          gh release edit "$TAG" --draft=false
