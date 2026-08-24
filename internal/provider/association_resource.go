@@ -2,15 +2,12 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/rixlhq/terraform-provider-clickup/internal/clickupclient"
 	"github.com/rixlhq/terraform-provider-clickup/internal/providerdata"
@@ -26,7 +23,7 @@ type associationResource struct {
 	name       string
 	createPath string
 	deletePath string
-	createBody map[string]string // terraform attr -> json body key (empty = use attr name)
+	bodyKeyMap map[string]string // terraform attr -> API body key (for renames like depends_on_id -> depends_on)
 	schemaFunc func(context.Context) schema.Schema
 }
 
@@ -56,37 +53,30 @@ func (r *associationResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	var raw map[string]types.String
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &raw)...)
+	plan := req.Plan.Raw
+	createPath, diags := r.buildPath(r.createPath, plan)
+	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	path := buildAssociationPath(r.createPath, raw)
-	body := buildAssociationBody(raw, r.createBody)
-	bodyBytes, err := json.Marshal(body)
-	if err != nil {
-		resp.Diagnostics.AddError("Body Encode Error", err.Error())
+	body, diags := r.buildBody(ctx, plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if _, err := r.client.Post(ctx, path, bodyBytes); err != nil {
+	if _, err := r.client.Post(ctx, createPath, body); err != nil {
 		resp.Diagnostics.AddError("ClickUp API Error", err.Error())
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, raw)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
-func (r *associationResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (r *associationResource) Read(_ context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	// Association resources have no single-GET endpoint. Return state as-is.
-	// Drift is detected when the parent resource is read or on next plan.
-	var state map[string]types.String
-	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+	resp.State.Raw = req.State.Raw
 }
 
 func (r *associationResource) Update(_ context.Context, _ resource.UpdateRequest, _ *resource.UpdateResponse) {
@@ -99,47 +89,18 @@ func (r *associationResource) Delete(ctx context.Context, req resource.DeleteReq
 		return
 	}
 
-	var state map[string]types.String
-	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	state := req.State.Raw
+	deletePath, diags := r.buildPath(r.deletePath, state)
+	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	path := buildAssociationPath(r.deletePath, state)
-	if _, err := r.client.Delete(ctx, path); err != nil {
+	if _, err := r.client.Delete(ctx, deletePath); err != nil {
 		if !clickupclient.IsNotFound(err) {
 			resp.Diagnostics.AddError("ClickUp API Error", err.Error())
 		}
 	}
-}
-
-// buildAssociationPath replaces {param} placeholders with values from the
-// Terraform state/plan map.
-func buildAssociationPath(path string, vals map[string]types.String) string {
-	for attr, v := range vals {
-		placeholder := "{" + attr + "}"
-		if strings.Contains(path, placeholder) {
-			path = strings.ReplaceAll(path, placeholder, v.ValueString())
-		}
-	}
-	return path
-}
-
-// buildAssociationBody constructs the JSON request body from the Terraform
-// values that are NOT path parameters.
-func buildAssociationBody(vals map[string]types.String, bodyKeyMap map[string]string) map[string]any {
-	body := map[string]any{}
-	for attr, v := range vals {
-		if v.IsNull() || v.IsUnknown() {
-			continue
-		}
-		jsonKey := attr
-		if mapped, ok := bodyKeyMap[attr]; ok && mapped != "" {
-			jsonKey = mapped
-		}
-		body[jsonKey] = v.ValueString()
-	}
-	return body
 }
 
 // requiresReplaceString is a helper for association resource schemas.

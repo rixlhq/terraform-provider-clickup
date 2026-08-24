@@ -17,18 +17,24 @@ func newTaskDependencyResource() resource.Resource {
 		name:       "task_dependency",
 		createPath: "/v2/task/{task_id}/dependency",
 		deletePath: "/v2/task/{task_id}/dependency",
-		createBody: map[string]string{"depends_on": "depends_on", "dependency_of": "dependency_of", "type": "type"},
+		bodyKeyMap: map[string]string{"depends_on_id": "depends_on", "dependency_of": "dependency_of", "type": "type"},
 		schemaFunc: taskDependencySchema,
 	}
 }
 
 func taskDependencySchema(_ context.Context) schema.Schema {
 	return schema.Schema{
-		MarkdownDescription: "Manages a dependency between two ClickUp tasks.",
+		MarkdownDescription: "Manages a dependency between two ClickUp tasks. Use `depends_on_id` to make this task depend on another, or `dependency_of` to mark this task as a dependency of another.",
 		Attributes: map[string]schema.Attribute{
-			"task_id":       requiresReplaceString(),
-			"depends_on":    requiresReplaceString(),
-			"dependency_of": requiresReplaceString(),
+			"task_id": requiresReplaceString(),
+			"depends_on_id": schema.StringAttribute{
+				Optional:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
+			},
+			"dependency_of": schema.StringAttribute{
+				Optional:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
+			},
 			"type": schema.StringAttribute{
 				Required:      true,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
@@ -86,7 +92,7 @@ func newTaskCustomFieldResource() resource.Resource {
 		name:       "task_custom_field",
 		createPath: "/v2/task/{task_id}/field/{field_id}",
 		deletePath: "/v2/task/{task_id}/field/{field_id}",
-		createBody: map[string]string{"value": "value"},
+		bodyKeyMap: map[string]string{"value": "value"},
 		schemaFunc: taskCustomFieldSchema,
 	}
 }
@@ -112,7 +118,7 @@ func newTaskGuestResource() resource.Resource {
 		name:       "task_guest",
 		createPath: "/v2/task/{task_id}/guest/{guest_id}",
 		deletePath: "/v2/task/{task_id}/guest/{guest_id}",
-		createBody: map[string]string{"permission_level": "permission_level"},
+		bodyKeyMap: map[string]string{"permission_level": "permission_level"},
 		schemaFunc: taskGuestSchema,
 	}
 }
@@ -138,7 +144,7 @@ func newFolderGuestResource() resource.Resource {
 		name:       "folder_guest",
 		createPath: "/v2/folder/{folder_id}/guest/{guest_id}",
 		deletePath: "/v2/folder/{folder_id}/guest/{guest_id}",
-		createBody: map[string]string{"permission_level": "permission_level"},
+		bodyKeyMap: map[string]string{"permission_level": "permission_level"},
 		schemaFunc: folderGuestSchema,
 	}
 }
@@ -164,7 +170,7 @@ func newListGuestResource() resource.Resource {
 		name:       "list_guest",
 		createPath: "/v2/list/{list_id}/guest/{guest_id}",
 		deletePath: "/v2/list/{list_id}/guest/{guest_id}",
-		createBody: map[string]string{"permission_level": "permission_level"},
+		bodyKeyMap: map[string]string{"permission_level": "permission_level"},
 		schemaFunc: listGuestSchema,
 	}
 }

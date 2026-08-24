@@ -139,7 +139,7 @@ func newKeyResultResource() resource.Resource {
 		updateBodyFields:   []string{"steps_current", "note"},
 		idField:            "key_result_id",
 		readFromList:       true,
-		readListRoot:       "key_results",
+		readListRoot:       "goal.key_results",
 		readListIDField:    "id",
 		createResponseRoot: "key_result",
 		readResponseRoot:   "key_result",
