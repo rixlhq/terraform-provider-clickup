@@ -30,4 +30,5 @@ terraform.d/
 ClickUp_PUBLIC_API_V3.prepared.json
 ClickUp_PUBLIC_API_V2.prepared.json
 ClickUp_PUBLIC_API_V2.prepared.merged.json
+generator_config.yml
 provider_code_spec.json

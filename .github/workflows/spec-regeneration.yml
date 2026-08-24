@@ -18,28 +18,20 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v7
+      - uses: jdx/mise-action@v2
         with:
-          go-version-file: 'go.mod'
-
-      - name: Install generators
-        run: |
-          go install github.com/hashicorp/terraform-plugin-codegen-openapi/cmd/tfplugingen-openapi@v0.3.0
-          go install github.com/hashicorp/terraform-plugin-codegen-framework/cmd/tfplugingen-framework@v0.4.1
+          experimental: true
 
       - name: Download latest ClickUp OpenAPI spec
-        run: curl -L -o ClickUp_PUBLIC_API_V3.yaml https://developer.clickup.com/openapi/ClickUp_PUBLIC_API_V3.yaml
+        run: curl -L -o ClickUp_PUBLIC_API_V2.json https://developer.clickup.com/openapi/ClickUp_PUBLIC_API_V2.json
 
       - name: Regenerate provider code
-        run: |
-          python3 tools/prepare_openapi_spec.py ClickUp_PUBLIC_API_V3.yaml ClickUp_PUBLIC_API_V3.prepared.json
-          python3 tools/generate_data_sources.py
-          tfplugingen-openapi generate --config generator_config.yml --output provider_code_spec.json ClickUp_PUBLIC_API_V3.prepared.json
-          rm -rf internal/provider/generated
-          tfplugingen-framework generate all --input provider_code_spec.json --output internal/provider/generated
-          python3 tools/generate_datasources.py
-          python3 tools/deduplicate_generated_page.py
-          gofmt -w internal/provider/datasources.go internal/provider/generated/datasource_page/page_data_source_gen.go
+        # Single source of truth: same pipeline as `mise run generate` locally.
+        # If this drifts, fix mise.toml, not this workflow.
+        run: mise run generate
+
+      - name: Regenerate registry docs
+        run: mise run docs
 
       - name: Build and test
         run: |
@@ -53,6 +45,6 @@ jobs:
           branch: automated/spec-regeneration
           title: 'chore: regenerate provider from latest ClickUp OpenAPI spec'
           body: |
-            This is an automated weekly regeneration of the provider code from the
-            latest ClickUp Public API V3 OpenAPI specification.
+            Automated weekly regeneration of the provider code from the latest
+            ClickUp Public API V2 OpenAPI specification via `mise run generate`.
           commit-message: 'chore: regenerate provider from latest ClickUp OpenAPI spec'
