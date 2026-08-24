@@ -1,3 +1,4 @@
+//nolint:goconst // Terraform attribute names repeated across schemas.
 package provider
 
 import (

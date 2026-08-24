@@ -114,6 +114,7 @@ func (p *ClickUpProvider) Resources(ctx context.Context) []func() resource.Resou
 		newViewCommentResource,
 		newWebhookResource,
 		newChatChannelResource,
+		// Association resources (POST/DELETE only)
 		newTaskDependencyResource,
 		newTaskLinkResource,
 		newTaskTagResource,
@@ -122,6 +123,17 @@ func (p *ClickUpProvider) Resources(ctx context.Context) []func() resource.Resou
 		newFolderGuestResource,
 		newListGuestResource,
 		newListTaskResource,
+		// Full CRUD resources with hand-written schemas
+		newTaskChecklistResource,
+		newChecklistItemResource,
+		newKeyResultResource,
+		newTaskTimeResource,
+		newTimeEntryResource,
+		newTimeEntryTagResource,
+		newTeamGuestResource,
+		newTeamUserResource,
+		newTeamViewResource,
+		newCommentReplyResource,
 	)
 }
 
