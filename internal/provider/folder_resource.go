@@ -1,4 +1,3 @@
-//nolint:goconst // Terraform attribute/path strings repeated in schemas, maps, and tests.
 package provider
 
 import (

@@ -92,9 +92,18 @@ linters:
       rules:
         - name: file-length-limit
           arguments:
-            - max: 1000
+            - max: 250
               skip-comments: true
               skip-blank-lines: true
+  exclusions:
+    paths:
+      - "internal/clickupv3/oas_.*\\.go"
+      - "internal/provider/generated/.*\\.go"
+      - "internal/provider/datasources\\.go"
+      - "internal/provider/resources\\.go"
+    rules:
+      - linters: [goconst]
+        path: "internal/provider/crud_resources_.*\\.go"
 formatters:
   enable:
     - gofmt

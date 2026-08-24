@@ -63,7 +63,7 @@ func (d *genericDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	}
 
 	schema := d.schema
-	if schema.Type() == nil {
+	if schema.Attributes == nil {
 		schema = d.schemaFunc(ctx)
 		d.schema = schema
 	}
