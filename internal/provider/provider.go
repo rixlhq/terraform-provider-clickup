@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/rixlhq/terraform-provider-clickup/internal/clickupclient"
+	"github.com/rixlhq/terraform-provider-clickup/internal/clickupv3"
 	"github.com/rixlhq/terraform-provider-clickup/internal/providerdata"
 )
 
@@ -28,8 +29,9 @@ type providerData = providerdata.Data
 
 // ClickUpProviderModel describes the provider configuration.
 type ClickUpProviderModel struct {
-	APIToken types.String `tfsdk:"api_token"`
-	BaseURL  types.String `tfsdk:"base_url"`
+	APIToken  types.String `tfsdk:"api_token"`
+	BaseURL   types.String `tfsdk:"base_url"`
+	V3BaseURL types.String `tfsdk:"v3_base_url"`
 }
 
 func (p *ClickUpProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -47,7 +49,11 @@ func (p *ClickUpProvider) Schema(ctx context.Context, req provider.SchemaRequest
 				Sensitive:           true,
 			},
 			"base_url": schema.StringAttribute{
-				MarkdownDescription: "Override the ClickUp API base URL. Can be set via the `CLICKUP_BASE_URL` environment variable. Defaults to `https://api.clickup.com/api`.",
+				MarkdownDescription: "Override the ClickUp V2 API base URL. Can be set via the `CLICKUP_BASE_URL` environment variable. Defaults to `https://api.clickup.com/api`.",
+				Optional:            true,
+			},
+			"v3_base_url": schema.StringAttribute{
+				MarkdownDescription: "Override the ClickUp V3 API base URL. Can be set via the `CLICKUP_V3_BASE_URL` environment variable. Defaults to `https://api.clickup.com/`.",
 				Optional:            true,
 			},
 		},
@@ -70,13 +76,21 @@ func (p *ClickUpProvider) Configure(ctx context.Context, req provider.ConfigureR
 
 	client := clickupclient.New(data.APIToken.ValueString(), data.BaseURL.ValueString(), nil)
 
-	resp.DataSourceData = &providerData{ClickUp: client}
-	resp.ResourceData = &providerData{ClickUp: client}
+	v3Client, err := clickupv3.New(data.APIToken.ValueString(), data.V3BaseURL.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("ClickUp V3 Client Error", err.Error())
+		return
+	}
+
+	pd := &providerData{ClickUp: client, ClickUpV3: v3Client}
+	resp.DataSourceData = pd
+	resp.ResourceData = pd
 }
 
 func applyEnvOverrides(data ClickUpProviderModel) ClickUpProviderModel {
 	data.APIToken = envOrString(data.APIToken, "CLICKUP_API_TOKEN")
 	data.BaseURL = envOrString(data.BaseURL, "CLICKUP_BASE_URL")
+	data.V3BaseURL = envOrString(data.V3BaseURL, "CLICKUP_V3_BASE_URL")
 	return data
 }
 
@@ -99,11 +113,14 @@ func (p *ClickUpProvider) Resources(ctx context.Context) []func() resource.Resou
 		newUserGroupResource,
 		newViewCommentResource,
 		newWebhookResource,
+		newChatChannelResource,
 	)
 }
 
 func (p *ClickUpProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
-	return append(dataSourceFactories, manualDataSourceFactories...)
+	return append(dataSourceFactories, append(manualDataSourceFactories,
+		newAuditLogsDataSource,
+	)...)
 }
 
 // New returns a factory for the ClickUp provider.
