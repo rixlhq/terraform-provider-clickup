@@ -1,0 +1,114 @@
+package provider
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+
+	"github.com/rixlhq/terraform-provider-clickup/internal/clickupclient"
+	"github.com/rixlhq/terraform-provider-clickup/internal/providerdata"
+)
+
+// associationResource manages a ClickUp API association (link/relationship)
+// that is created via POST and removed via DELETE with no update endpoint.
+// All configurable attributes use RequiresReplace so Terraform recreates the
+// association instead of calling Update. Read returns the state as-is since
+// these endpoints have no single-GET; drift is detected on the next plan.
+type associationResource struct {
+	client     *clickupclient.Client
+	name       string
+	createPath string
+	deletePath string
+	bodyKeyMap map[string]string // terraform attr -> API body key (for renames like depends_on_id -> depends_on)
+	schemaFunc func(context.Context) schema.Schema
+}
+
+func (r *associationResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_" + r.name
+}
+
+func (r *associationResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = r.schemaFunc(ctx)
+}
+
+func (r *associationResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+	pd, ok := req.ProviderData.(*providerdata.Data)
+	if !ok {
+		resp.Diagnostics.AddError("Unexpected Resource Configure Type", fmt.Sprintf("Expected *providerdata.Data, got %T", req.ProviderData))
+		return
+	}
+	r.client = pd.ClickUp
+}
+
+func (r *associationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	if r.client == nil {
+		resp.Diagnostics.AddError("Missing ClickUp Client", "Configure the provider with api_token to use this resource.")
+		return
+	}
+
+	plan := req.Plan.Raw
+	createPath, diags := r.buildPath(r.createPath, plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	body, diags := r.buildBody(ctx, plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if _, err := r.client.Post(ctx, createPath, body); err != nil {
+		resp.Diagnostics.AddError("ClickUp API Error", err.Error())
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+}
+
+func (r *associationResource) Read(_ context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	// Association resources have no single-GET endpoint. Return state as-is.
+	resp.State.Raw = req.State.Raw
+}
+
+func (r *associationResource) Update(_ context.Context, _ resource.UpdateRequest, _ *resource.UpdateResponse) {
+	// Never called — all attributes use RequiresReplace.
+}
+
+func (r *associationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	if r.client == nil {
+		resp.Diagnostics.AddError("Missing ClickUp Client", "Configure the provider with api_token to use this resource.")
+		return
+	}
+
+	state := req.State.Raw
+	deletePath, diags := r.buildPath(r.deletePath, state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if _, err := r.client.Delete(ctx, deletePath); err != nil {
+		if !clickupclient.IsNotFound(err) {
+			resp.Diagnostics.AddError("ClickUp API Error", err.Error())
+		}
+	}
+}
+
+// requiresReplaceString is a helper for association resource schemas.
+func requiresReplaceString() schema.StringAttribute {
+	return schema.StringAttribute{
+		Required: true,
+		PlanModifiers: []planmodifier.String{
+			stringplanmodifier.RequiresReplace(),
+		},
+	}
+}
