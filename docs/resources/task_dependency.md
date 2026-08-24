@@ -18,9 +18,9 @@ Manages a dependency between two ClickUp tasks. Use `depends_on_id` to make this
 ### Required
 
 - `task_id` (String)
-- `type` (String)
 
 ### Optional
 
 - `dependency_of` (String)
 - `depends_on_id` (String)
+- `type` (String)

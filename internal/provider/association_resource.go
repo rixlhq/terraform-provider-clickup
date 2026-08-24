@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"net/url"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -19,12 +20,13 @@ import (
 // association instead of calling Update. Read returns the state as-is since
 // these endpoints have no single-GET; drift is detected on the next plan.
 type associationResource struct {
-	client     *clickupclient.Client
-	name       string
-	createPath string
-	deletePath string
-	bodyKeyMap map[string]string // terraform attr -> API body key (for renames like depends_on_id -> depends_on)
-	schemaFunc func(context.Context) schema.Schema
+	client            *clickupclient.Client
+	name              string
+	createPath        string
+	deletePath        string
+	bodyKeyMap        map[string]string // terraform attr -> API body key (for renames like depends_on_id -> depends_on)
+	deleteQueryParams []string          // terraform attr names to send as query params on DELETE
+	schemaFunc        func(context.Context) schema.Schema
 }
 
 func (r *associationResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -96,9 +98,38 @@ func (r *associationResource) Delete(ctx context.Context, req resource.DeleteReq
 		return
 	}
 
-	if _, err := r.client.Delete(ctx, deletePath); err != nil {
-		if !clickupclient.IsNotFound(err) {
-			resp.Diagnostics.AddError("ClickUp API Error", err.Error())
+	// Build query params for DELETE (e.g. task_dependency needs
+	// depends_on and dependency_of as query params, not path params).
+	var query url.Values
+	if len(r.deleteQueryParams) > 0 {
+		obj, err := asObject(state)
+		if err != nil {
+			resp.Diagnostics.AddError("Invalid State", err.Error())
+			return
+		}
+		query = url.Values{}
+		for _, attr := range r.deleteQueryParams {
+			apiKey := attr
+			if mapped, ok := r.bodyKeyMap[attr]; ok && mapped != "" {
+				apiKey = mapped
+			}
+			if v, ok := obj[attr]; ok {
+				if s, err := valueAsString(v); err == nil {
+					query.Set(apiKey, s)
+				}
+			}
+		}
+	}
+
+	var deleteErr error
+	if query != nil {
+		_, deleteErr = r.client.Delete(ctx, deletePath, query)
+	} else {
+		_, deleteErr = r.client.Delete(ctx, deletePath)
+	}
+	if deleteErr != nil {
+		if !clickupclient.IsNotFound(deleteErr) {
+			resp.Diagnostics.AddError("ClickUp API Error", deleteErr.Error())
 		}
 	}
 }

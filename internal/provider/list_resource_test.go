@@ -18,13 +18,16 @@ func TestAccList_basic(t *testing.T) {
 
 	listName := "test"
 
+	listJSON := func() string {
+		return fmt.Sprintf(`{"id":"456","name":"%s","folder":{"id":"123","name":"folder1","hidden":false,"access":true},"space":{"id":"789","name":"space1","access":true,"private":false},"archived":false,"priority":null,"assignee":null,"content":null,"due_date":null,"due_date_time":null,"inbound_address":null,"start_date":null,"permission_level":null,"status":null,"orderindex":1,"task_count":0,"override_statuses":false,"statuses":[]}`, listName)
+	}
 	ts.Register("POST", "/v2/folder/123/list", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write(fmt.Appendf(nil, `{"id":"456","name":"%s","folder":{"id":"123"},"space":{"id":"789"}}`, listName))
+		_, _ = w.Write([]byte(listJSON()))
 	})
 	ts.Register("GET", "/v2/list/456", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write(fmt.Appendf(nil, `{"id":"456","name":"%s","folder":{"id":"123"},"space":{"id":"789"}}`, listName))
+		_, _ = w.Write([]byte(listJSON()))
 	})
 	ts.Register("PUT", "/v2/list/456", func(w http.ResponseWriter, r *http.Request) {
 		body, _ := io.ReadAll(r.Body)
@@ -36,7 +39,7 @@ func TestAccList_basic(t *testing.T) {
 			}
 		}
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write(fmt.Appendf(nil, `{"id":"456","name":"%s","folder":{"id":"123"},"space":{"id":"789"}}`, listName))
+		_, _ = w.Write([]byte(listJSON()))
 	})
 	ts.Register("DELETE", "/v2/list/456", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

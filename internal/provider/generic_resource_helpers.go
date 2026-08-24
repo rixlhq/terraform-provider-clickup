@@ -373,6 +373,17 @@ func (r *genericResource) extractID(raw []byte) (string, error) {
 	}
 	for _, key := range roots {
 		if d, ok := data[key].(map[string]any); ok {
+			// If createResponseItemArray is set, extract ID from the last
+			// element of the array at that key (e.g. checklist.items[-1].id).
+			if r.createResponseItemArray != "" {
+				if arr, ok := d[r.createResponseItemArray].([]any); ok && len(arr) > 0 {
+					if last, ok := arr[len(arr)-1].(map[string]any); ok {
+						if id, ok := last["id"]; ok {
+							return valueToIDString(id), nil
+						}
+					}
+				}
+			}
 			if id, ok := d["id"]; ok {
 				return valueToIDString(id), nil
 			}

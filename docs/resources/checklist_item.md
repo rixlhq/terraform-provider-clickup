@@ -19,7 +19,6 @@ Manages an item within a ClickUp checklist.
 
 - `checklist_id` (String)
 - `name` (String)
-- `task_id` (String)
 
 ### Optional
 

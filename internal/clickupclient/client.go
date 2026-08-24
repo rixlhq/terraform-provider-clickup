@@ -77,8 +77,12 @@ func (c *Client) Put(ctx context.Context, path string, body []byte) ([]byte, err
 }
 
 // Delete performs a DELETE request against the ClickUp API and returns the response body.
-func (c *Client) Delete(ctx context.Context, path string) ([]byte, error) {
-	return c.do(ctx, http.MethodDelete, path, nil, nil)
+func (c *Client) Delete(ctx context.Context, path string, query ...url.Values) ([]byte, error) {
+	var q url.Values
+	if len(query) > 0 {
+		q = query[0]
+	}
+	return c.do(ctx, http.MethodDelete, path, q, nil)
 }
 
 func (c *Client) do(ctx context.Context, method, path string, query url.Values, body []byte) ([]byte, error) {

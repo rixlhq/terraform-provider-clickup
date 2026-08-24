@@ -48,6 +48,11 @@ type genericResource struct {
 	// createResponseRoot is the JSON key that wraps the created object in the
 	// response (e.g. "view", "key_result"). Empty means the object is top-level.
 	createResponseRoot string
+	// createResponseItemArray is the JSON key inside createResponseRoot that
+	// contains an array of items. When set, extractID takes the last element
+	// of this array and reads its "id" field. Used for endpoints like
+	// checklist_item where the response is { "checklist": { "items": [...] } }.
+	createResponseItemArray string
 	// idFromBody is a path of map keys used to extract the resource ID from
 	// the request body when the API response is empty or does not contain an id.
 	// This is used for both create and update. Example: ["tag", "name"] for space tags.

@@ -27,7 +27,6 @@ Manages a time entry on a ClickUp team.
 - `billable` (Boolean)
 - `description` (String)
 - `end` (Number)
-- `stop` (Number)
 - `tag_action` (String)
 - `tags` (List of String)
 - `tid` (String)

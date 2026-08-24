@@ -14,11 +14,12 @@ import (
 // POST/DELETE /v2/task/{task_id}/dependency
 func newTaskDependencyResource() resource.Resource {
 	return &associationResource{
-		name:       "task_dependency",
-		createPath: "/v2/task/{task_id}/dependency",
-		deletePath: "/v2/task/{task_id}/dependency",
-		bodyKeyMap: map[string]string{"depends_on_id": "depends_on", "dependency_of": "dependency_of", "type": "type"},
-		schemaFunc: taskDependencySchema,
+		name:              "task_dependency",
+		createPath:        "/v2/task/{task_id}/dependency",
+		deletePath:        "/v2/task/{task_id}/dependency",
+		bodyKeyMap:        map[string]string{"depends_on_id": "depends_on", "dependency_of": "dependency_of"},
+		deleteQueryParams: []string{"depends_on_id", "dependency_of"},
+		schemaFunc:        taskDependencySchema,
 	}
 }
 
@@ -36,7 +37,7 @@ func taskDependencySchema(_ context.Context) schema.Schema {
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"type": schema.StringAttribute{
-				Required:      true,
+				Optional:      true,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 		},

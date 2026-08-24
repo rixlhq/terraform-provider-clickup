@@ -67,24 +67,25 @@ func taskChecklistSchema(_ context.Context) schema.Schema {
 // POST /v2/checklist/{checklist_id}/checklist_item (create)
 // PUT  /v2/checklist/{checklist_id}/checklist_item/{checklist_item_id} (update)
 // DELETE /v2/checklist/{checklist_id}/checklist_item/{checklist_item_id} (delete)
-// No GET on checklist_item; read from task GET -> checklists -> items.
-// Create response wraps the item inside { "checklist": { "items": [...] } }.
+// No GET on checklist_item. The task GET returns checklists[].items[],
+// a nested array the generic list reader cannot traverse.
+// Read returns state as-is; drift is detected on the next plan.
+// Create response wraps the item inside { "checklist": { "items": [...] } },
+// so we use idFromBody to extract from checklist.items[].id (last entry).
 func newChecklistItemResource() resource.Resource {
 	return &genericResource{
-		name:               "checklist_item",
-		createPath:         "/v2/checklist/{checklist_id}/checklist_item",
-		readPath:           "/v2/task/{task_id}",
-		updatePath:         "/v2/checklist/{checklist_id}/checklist_item/{checklist_item_id}",
-		deletePath:         "/v2/checklist/{checklist_id}/checklist_item/{checklist_item_id}",
-		updateMethod:       "put",
-		createBodyFields:   []string{"name", "assignee"},
-		updateBodyFields:   []string{"name", "assignee", "resolved", "parent"},
-		idField:            "checklist_item_id",
-		readFromList:       true,
-		readListRoot:       "checklists.items",
-		readListIDField:    "id",
-		createResponseRoot: "checklist",
-		schemaFunc:         checklistItemSchema,
+		name:                    "checklist_item",
+		createPath:              "/v2/checklist/{checklist_id}/checklist_item",
+		readPath:                "/v2/checklist/{checklist_id}/checklist_item",
+		updatePath:              "/v2/checklist/{checklist_id}/checklist_item/{checklist_item_id}",
+		deletePath:              "/v2/checklist/{checklist_id}/checklist_item/{checklist_item_id}",
+		updateMethod:            "put",
+		createBodyFields:        []string{"name", "assignee"},
+		updateBodyFields:        []string{"name", "assignee", "resolved", "parent"},
+		idField:                 "checklist_item_id",
+		createResponseRoot:      "checklist",
+		createResponseItemArray: "items",
+		schemaFunc:              checklistItemSchema,
 	}
 }
 
@@ -99,12 +100,6 @@ func checklistItemSchema(_ context.Context) schema.Schema {
 				},
 			},
 			"checklist_id": schema.StringAttribute{
-				Required: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-			},
-			"task_id": schema.StringAttribute{
 				Required: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -282,7 +277,7 @@ func newTimeEntryResource() resource.Resource {
 		updatePath:       "/v2/team/{team_id}/time_entries/{timer_id}",
 		deletePath:       "/v2/team/{team_id}/time_entries/{timer_id}",
 		updateMethod:     "put",
-		createBodyFields: []string{"description", "tags", "start", "stop", "end", "billable", "duration", "assignee", "tid"},
+		createBodyFields: []string{"description", "tags", "start", "end", "billable", "duration", "assignee", "tid"},
 		updateBodyFields: []string{"description", "tags", "tag_action", "start", "end", "tid", "billable", "duration"},
 		idField:          "timer_id",
 		schemaFunc:       timeEntrySchema,
@@ -316,10 +311,6 @@ func timeEntrySchema(_ context.Context) schema.Schema {
 			},
 			"start": schema.Int64Attribute{
 				Required: true,
-			},
-			"stop": schema.Int64Attribute{
-				Optional: true,
-				Computed: true,
 			},
 			"end": schema.Int64Attribute{
 				Optional: true,
