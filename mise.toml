@@ -24,7 +24,7 @@ run = "go install -v ./..."
 [tasks.test]
 description = "Run unit tests"
 usage = 'arg "<pkg>" default="./..."'
-run = "go test -v -race -cover -timeout=120s -parallel=10 ${usage_pkg?}"
+run = "go test -v -race -cover -timeout=120s ${usage_pkg?}"
 
 [tasks.testacc]
 description = "Run acceptance tests with TF_ACC=1"
