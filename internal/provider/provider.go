@@ -114,6 +114,14 @@ func (p *ClickUpProvider) Resources(ctx context.Context) []func() resource.Resou
 		newViewCommentResource,
 		newWebhookResource,
 		newChatChannelResource,
+		newTaskDependencyResource,
+		newTaskLinkResource,
+		newTaskTagResource,
+		newTaskCustomFieldResource,
+		newTaskGuestResource,
+		newFolderGuestResource,
+		newListGuestResource,
+		newListTaskResource,
 	)
 }
 
