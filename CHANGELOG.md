@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/rixlhq/terraform-provider-clickup/compare/v0.1.0...v0.1.1) (2026-08-24)
+
+
+### Bug Fixes
+
+* **docs:** generate registry docs for all resources and data sources ([6cbed18](https://github.com/rixlhq/terraform-provider-clickup/commit/6cbed1820f3618cbc87039c85e8c3a9130200538))
+
 ## [0.1.0](https://github.com/rixlhq/terraform-provider-clickup/compare/v0.0.1...v0.1.0) (2026-08-19)
 
 
