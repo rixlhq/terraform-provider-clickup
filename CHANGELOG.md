@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.0](https://github.com/rixlhq/terraform-provider-clickup/compare/v0.2.0...v0.3.0) (2026-08-24)
+
+
+### Features
+
+* V3 client + 19 V2 resources + release draft fix ([#12](https://github.com/rixlhq/terraform-provider-clickup/issues/12)) ([4e42618](https://github.com/rixlhq/terraform-provider-clickup/commit/4e426185e0e94dc01a214d34ace8616c36875d46))
+
+
+### Bug Fixes
+
+* **v2:** address CodeRabbit review comments on resource implementations ([af944a2](https://github.com/rixlhq/terraform-provider-clickup/commit/af944a2368e004fbcb76c727b2476dea9cda0e96))
+* **v2:** fix task_dependency DELETE query params, time_entry stop field, checklist_item ID extraction ([eca10ef](https://github.com/rixlhq/terraform-provider-clickup/commit/eca10ef1ba75a0c8b48e1400b3cf2fa70dff4187))
+
 ## [0.2.0](https://github.com/rixlhq/terraform-provider-clickup/compare/v0.1.1...v0.2.0) (2026-08-24)
 
 
