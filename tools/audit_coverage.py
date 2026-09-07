@@ -15,6 +15,27 @@ def load_json(p: str) -> dict:
     return json.loads(Path(p).read_text())
 
 
+def normalize_config(data: object, source: str) -> dict:
+    """Validate the generator config shape main() depends on.
+
+    Exits with a clear error instead of letting main() fail later with
+    KeyError/TypeError when data_sources or resources are missing or
+    wrong-shaped.
+    """
+    if not isinstance(data, dict):
+        print(f"error: {source} must contain a mapping, got {type(data).__name__}.", file=sys.stderr)
+        sys.exit(1)
+    for key in ("data_sources", "resources"):
+        section = data.get(key, {})
+        if section is None:
+            section = {}
+        if not isinstance(section, dict):
+            print(f"error: {source} section {key!r} must be a mapping, got {type(section).__name__}.", file=sys.stderr)
+            sys.exit(1)
+        data[key] = section
+    return data
+
+
 def load_config(p: str) -> dict:
     """Load generator_config.yml which is JSON-encoded (see generate_config.py).
 
@@ -30,14 +51,13 @@ def load_config(p: str) -> dict:
         return {"data_sources": {}, "resources": {}}
     text = path.read_text()
     try:
-        return json.loads(text)
+        return normalize_config(json.loads(text), p)
     except json.JSONDecodeError:
         pass
     try:
         import yaml  # type: ignore
 
-        data = yaml.safe_load(text)
-        return data if isinstance(data, dict) else {"data_sources": {}, "resources": {}}
+        return normalize_config(yaml.safe_load(text), p)
     except ImportError:
         print(f"error: {p} is not JSON and PyYAML is not installed.", file=sys.stderr)
         sys.exit(1)
