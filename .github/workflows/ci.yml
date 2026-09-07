@@ -21,13 +21,24 @@ jobs:
         with:
           go-version-file: 'go.mod'
       - run: go mod download
-      - parallel:
-          - name: Lint
-            uses: golangci/golangci-lint-action@v9
-            with:
-              version: latest
-              only-new-issues: true
-          - name: Test
-            run: go test ./...
-          - name: Build
-            run: CGO_ENABLED=0 go build -o ./build/terraform-provider-clickup .
+      - name: Format check
+        run: |
+          output=$(gofmt -s -l -e .)
+          if [ -n "$output" ]; then
+            echo "Unformatted files found:"
+            echo "$output"
+            exit 1
+          fi
+      - name: Lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: latest
+          only-new-issues: true
+      - name: Test
+        run: go test ./...
+      - name: Acceptance tests (mock server)
+        run: TF_ACC=1 go test ./...
+        env:
+          TF_ACC: "1"
+      - name: Build
+        run: CGO_ENABLED=0 go build -o ./build/terraform-provider-clickup .
