@@ -15,6 +15,54 @@ def load_json(p: str) -> dict:
     return json.loads(Path(p).read_text())
 
 
+def normalize_config(data: object, source: str) -> dict:
+    """Validate the generator config shape main() depends on.
+
+    Exits with a clear error instead of letting main() fail later with
+    KeyError/TypeError when data_sources or resources are missing or
+    wrong-shaped.
+    """
+    if not isinstance(data, dict):
+        print(f"error: {source} must contain a mapping, got {type(data).__name__}.", file=sys.stderr)
+        sys.exit(1)
+    for key in ("data_sources", "resources"):
+        section = data.get(key, {})
+        if section is None:
+            section = {}
+        if not isinstance(section, dict):
+            print(f"error: {source} section {key!r} must be a mapping, got {type(section).__name__}.", file=sys.stderr)
+            sys.exit(1)
+        data[key] = section
+    return data
+
+
+def load_config(p: str) -> dict:
+    """Load generator_config.yml which is JSON-encoded (see generate_config.py).
+
+    Returns empty resources/data_sources when the file is missing, since it
+    is a gitignored intermediate. Warn instead of crashing so the tool stays
+    usable on fresh checkouts per AGENTS.md.
+    """
+    path = Path(p)
+    if not path.exists():
+        print(f"warning: {p} not found (gitignored intermediate);", file=sys.stderr)
+        print("warning: generated coverage will be undercounted;", file=sys.stderr)
+        print(f"warning: run mise run generate to produce {p} for full results.", file=sys.stderr)
+        return {"data_sources": {}, "resources": {}}
+    text = path.read_text()
+    try:
+        return normalize_config(json.loads(text), p)
+    except json.JSONDecodeError:
+        pass
+    try:
+        import yaml  # type: ignore
+
+        return normalize_config(yaml.safe_load(text), p)
+    except ImportError:
+        print(f"error: {p} is not JSON and PyYAML is not installed.", file=sys.stderr)
+        sys.exit(1)
+
+
 def area(path: str, operation_id: str | None) -> str:
     """Categorize an endpoint by its URL prefix / operation name."""
     if "/webhook" in path or "Webhook" in (operation_id or ""):
@@ -50,13 +98,17 @@ def area(path: str, operation_id: str | None) -> str:
 
 def main() -> None:
     if len(sys.argv) < 2:
-        print(f"usage: {sys.argv[0]} <ClickUp_PUBLIC_API_V2.prepared.json>", file=sys.stderr)
+        print(f"usage: {sys.argv[0]} <ClickUp_PUBLIC_API_V2.prepared.json> [generator_config.yml]", file=sys.stderr)
         sys.exit(1)
 
     spec_path = Path(sys.argv[1])
+    if not spec_path.exists():
+        print(f"error: spec file not found: {spec_path}", file=sys.stderr)
+        sys.exit(1)
     spec = load_json(spec_path)
 
-    cfg = load_json("generator_config.yml")
+    cfg_path = sys.argv[2] if len(sys.argv) > 2 else "generator_config.yml"
+    cfg = load_config(cfg_path)
     ds_paths = {
         (cfg["data_sources"][name]["read"]["path"], cfg["data_sources"][name]["read"]["method"])
         for name in cfg["data_sources"]

@@ -1,6 +1,6 @@
 # Terraform Provider for ClickUp
 
-A Terraform provider for managing resources in [ClickUp](https://clickup.com) via the public API v3.
+A Terraform provider for managing resources in [ClickUp](https://clickup.com) via the ClickUp public APIs (V2 and V3).
 
 ## Requirements
 
@@ -26,8 +26,8 @@ provider "clickup" {
 ```
 
 The `api_token` can be set via the `CLICKUP_API_TOKEN` environment variable. The
-`base_url` attribute (or `CLICKUP_BASE_URL`) can be used to point at a different
-ClickUp API endpoint.
+`base_url` attribute (or `CLICKUP_BASE_URL`) overrides the V2 API endpoint,
+and `v3_base_url` (or `CLICKUP_V3_BASE_URL`) overrides the V3 API endpoint.
 
 ## Development
 
@@ -55,6 +55,19 @@ Build the provider:
 
 ```sh
 mise run build
+```
+
+Run unit tests (mock-server acceptance tests included with `TF_ACC=1`):
+
+```sh
+mise run test
+TF_ACC=1 go test ./...
+```
+
+Check API coverage against the OpenAPI spec:
+
+```sh
+python3 tools/audit_coverage.py ClickUp_PUBLIC_API_V2.prepared.json
 ```
 
 ## License
