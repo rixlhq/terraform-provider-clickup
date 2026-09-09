@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.2](https://github.com/rixlhq/terraform-provider-clickup/compare/v0.3.1...v0.3.2) (2026-09-09)
+
+
+### Bug Fixes
+
+* CI fmt gate plus mock TF_ACC, audit tool, README gaps ([4c3a719](https://github.com/rixlhq/terraform-provider-clickup/commit/4c3a71998f8bf402a64262f03a3d5578254ffd08))
+* **ci:** keep parallel steps, add fmt gate and mock TF_ACC coverage ([ff00f55](https://github.com/rixlhq/terraform-provider-clickup/commit/ff00f557267e4038497673c7daeaef37c2ae03c9))
+* **ci:** replace invalid parallel block with sequential steps ([26d1f6c](https://github.com/rixlhq/terraform-provider-clickup/commit/26d1f6c7b7633f774a4bbecd1a95235da6fbf1ba))
+* **tools:** make audit_coverage usable without generated config ([8cb96e8](https://github.com/rixlhq/terraform-provider-clickup/commit/8cb96e80cec25487cc201a78eef0927087b47775))
+* **tools:** validate audit config shape before use ([94ee9b2](https://github.com/rixlhq/terraform-provider-clickup/commit/94ee9b2053455bc5d0950e412c7987beb9523354))
+* **workflows:** set timeout for CI, release, and spec regeneration jobs ([569910e](https://github.com/rixlhq/terraform-provider-clickup/commit/569910e16843355621e529980db6b8d8387faf3c))
+
 ## [0.3.1](https://github.com/rixlhq/terraform-provider-clickup/compare/v0.3.0...v0.3.1) (2026-08-24)
 
 
