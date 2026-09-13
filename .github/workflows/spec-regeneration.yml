@@ -24,7 +24,17 @@ jobs:
           experimental: true
 
       - name: Download latest ClickUp OpenAPI spec
-        run: curl -L -o ClickUp_PUBLIC_API_V2.json https://developer.clickup.com/openapi/ClickUp_PUBLIC_API_V2.json
+        # developer.clickup.com (ReadMe.io) serves a JS bot-check page to plain
+        # curl; browser-like headers are required. -f makes HTTP errors fail
+        # the step instead of writing an HTML error page into the JSON file.
+        run: |
+          curl -fsSL --compressed \
+            -A 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36' \
+            -H 'Accept: application/json,*/*' \
+            -H 'Referer: https://developer.clickup.com/docs/open-api-spec' \
+            -o ClickUp_PUBLIC_API_V2.json \
+            https://developer.clickup.com/openapi/clickup-api-v2-reference.json
+          python3 -c "import json,sys; d=json.load(open('ClickUp_PUBLIC_API_V2.json')); sys.exit('not an OpenAPI spec' if 'openapi' not in d else 0)"
 
       - name: Regenerate provider code
         # Single source of truth: same pipeline as `mise run generate` locally.
