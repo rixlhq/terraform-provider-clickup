@@ -32,3 +32,7 @@ ClickUp_PUBLIC_API_V2.prepared.json
 ClickUp_PUBLIC_API_V2.prepared.merged.json
 generator_config.yml
 provider_code_spec.json
+
+# Python
+__pycache__/
+*.pyc

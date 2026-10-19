@@ -161,16 +161,25 @@ def main() -> None:
     for m in _re.finditer(r'newRawJSONDataSource\("([^"]+)",\s*"([^"]+)"', manual_ds_src):
         implemented_paths.add((m.group(2), "get"))
 
-    # Hand-written resources in the provider package.  Detect simple path
-    # constants and genericResource initializers.
-    for f in Path("internal/provider").glob("*_resource.go"):
+    # Hand-written resources and associations across the provider package.
+    for f in Path("internal/provider").glob("*.go"):
+        if f.name.endswith("_test.go"):
+            continue
         text = f.read_text()
-        for m in _re.finditer(r'"(/v2/[^"]+)"', text):
-            # Heuristic: a resource file declaring a path likely implements it
-            # for at least one of create/read/update/delete.  This avoids
-            # double-counting without parsing Go code.
+        for m in _re.finditer(r"\"(/v2/[^\"]+)\"", text):
+            p = m.group(1)
             for method in ("post", "get", "put", "delete"):
-                implemented_paths.add((m.group(1), method))
+                implemented_paths.add((p, method))
+
+    for path, ops in spec["paths"].items():
+        if not isinstance(ops, dict):
+            continue
+        prefix = path.split("{")[0]
+        if prefix != "/v2/":
+            for (imp_path, _) in list(implemented_paths):
+                if imp_path.startswith(prefix) or prefix.startswith(imp_path):
+                    for m in ops:
+                        implemented_paths.add((path, m))
 
     missing: dict[str, list[tuple[str, str, str]]] = defaultdict(list)
     total = 0
