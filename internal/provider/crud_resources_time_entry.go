@@ -83,7 +83,7 @@ func timeEntrySchema(_ context.Context) schema.Schema {
 			"tag_action": schema.StringAttribute{
 				Optional: true,
 				Validators: []validator.String{
-					stringvalidator.OneOf("add", "remove"),
+					stringvalidator.OneOf("add", "remove", "replace"),
 				},
 			},
 		},
