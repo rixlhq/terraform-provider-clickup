@@ -67,8 +67,8 @@ func (r *webhookResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				Required: true,
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(
-						regexp.MustCompile(`^https?://`),
-						"must be a valid URL starting with http:// or https://",
+						regexp.MustCompile(`^(https?://|[a-zA-Z0-9][-a-zA-Z0-9]*\.[a-zA-Z0-9])`),
+						"must be a valid URL starting with http:// or https://, or a valid domain",
 					),
 				},
 			},

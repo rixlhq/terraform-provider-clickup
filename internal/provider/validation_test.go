@@ -75,3 +75,27 @@ resource "clickup_chat_channel" "test" {
 		},
 	})
 }
+
+func TestAccValidation_WebhookProtocolFreeEndpoint(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+provider "clickup" {
+  base_url  = "https://example.com/api"
+  api_token = "pk_test"
+}
+
+resource "clickup_webhook" "test" {
+  team_id  = 123
+  endpoint = "hooks.example.com/clickup"
+  events   = ["taskCreated"]
+}
+`,
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
