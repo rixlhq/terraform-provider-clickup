@@ -10,7 +10,7 @@ builds:
     flags:
       - -trimpath
     ldflags:
-      - '-s -w -X github.com/rixlhq/terraform-provider-clickup/internal/version.ProviderVersion={{.Version}}'
+      - '-s -w -X main.version={{.Version}}'
     goos:
       - freebsd
       - windows
@@ -18,12 +18,7 @@ builds:
       - darwin
     goarch:
       - amd64
-      - '386'
-      - arm
       - arm64
-    ignore:
-      - goos: darwin
-        goarch: '386'
     binary: '{{ .ProjectName }}_v{{ .Version }}'
 archives:
   - formats:
@@ -46,13 +41,11 @@ signs:
       - "--detach-sign"
       - "${artifact}"
 release:
-  mode: keep-existing
-  replace_existing_artifacts: true
-  # Release is created as draft by release-please. Goreleaser adopts the
-  # existing draft, uploads artifacts, then the workflow atomically publishes it.
   use_existing_draft: true
-  draft: true
+  mode: keep-existing
   name_template: "v{{ .Version }}"
+  draft: false
+  replace_existing_artifacts: true
   extra_files:
     - glob: 'terraform-registry-manifest.json'
       name_template: '{{ .ProjectName }}_{{ .Version }}_manifest.json'
