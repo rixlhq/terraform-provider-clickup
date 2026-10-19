@@ -78,6 +78,9 @@ func (p *ClickUpProvider) Configure(ctx context.Context, req provider.ConfigureR
 	}
 
 	client := clickupclient.New(data.APIToken.ValueString(), data.BaseURL.ValueString(), nil)
+	if p.version != "" {
+		client.SetUserAgent("terraform-provider-clickup/" + p.version)
+	}
 
 	v3Client, err := clickupv3.New(data.APIToken.ValueString(), data.V3BaseURL.ValueString())
 	if err != nil {
