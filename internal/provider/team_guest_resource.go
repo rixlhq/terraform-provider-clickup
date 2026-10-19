@@ -3,7 +3,9 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
@@ -19,6 +21,8 @@ import (
 func newTeamGuestResource() resource.Resource {
 	return &teamGuestResource{}
 }
+
+var _ resource.ResourceWithImportState = &teamGuestResource{}
 
 type teamGuestResource struct {
 	client *clickupclient.Client
@@ -176,4 +180,15 @@ func (r *teamGuestResource) Delete(ctx context.Context, req resource.DeleteReque
 			resp.Diagnostics.AddError("ClickUp API Error", err.Error())
 		}
 	}
+}
+
+// ImportState imports an existing team guest using team_id:guest_id format.
+func (r *teamGuestResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	parts := strings.SplitN(req.ID, ":", 2)
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		resp.Diagnostics.AddError("Invalid Import ID", "expected team_id:guest_id format")
+		return
+	}
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("team_id"), parts[0])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("guest_id"), parts[1])...)
 }
