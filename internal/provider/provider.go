@@ -41,7 +41,7 @@ func (p *ClickUpProvider) Metadata(ctx context.Context, req provider.MetadataReq
 
 func (p *ClickUpProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Terraform provider for managing ClickUp resources via the public API.",
+		MarkdownDescription: "Terraform provider for managing ClickUp infrastructure via the ClickUp Public APIs (V2 and V3). Automate workspaces, spaces, folders, lists, tasks, goals, webhooks, chat channels, time entries, and permissions under Terraform Plugin Framework protocol version 6.",
 		Attributes: map[string]schema.Attribute{
 			"api_token": schema.StringAttribute{
 				MarkdownDescription: "ClickUp API token. Can be set via the `CLICKUP_API_TOKEN` environment variable.",
