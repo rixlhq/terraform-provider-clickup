@@ -4,10 +4,14 @@ package provider
 import (
 	"context"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 )
 
 // --- comment_reply ---
@@ -51,14 +55,23 @@ func commentReplySchema(_ context.Context) schema.Schema {
 			},
 			"comment_text": schema.StringAttribute{
 				Required: true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(1),
+				},
 			},
 			"assignee": schema.Int64Attribute{
 				Optional: true,
 				Computed: true,
+				Validators: []validator.Int64{
+					int64validator.ConflictsWith(path.MatchRelative().AtParent().AtName("group_assignee")),
+				},
 			},
 			"group_assignee": schema.Int64Attribute{
 				Optional: true,
 				Computed: true,
+				Validators: []validator.Int64{
+					int64validator.ConflictsWith(path.MatchRelative().AtParent().AtName("assignee")),
+				},
 			},
 			"resolved": schema.BoolAttribute{
 				Optional: true,

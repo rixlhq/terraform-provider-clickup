@@ -3,10 +3,13 @@ package provider
 import (
 	"context"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/rixlhq/terraform-provider-clickup/internal/clickupv3"
@@ -43,6 +46,9 @@ func (r *chatChannelResource) Schema(_ context.Context, _ resource.SchemaRequest
 			"name": schema.StringAttribute{
 				MarkdownDescription: "The name of the Channel.",
 				Required:            true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(1),
+				},
 			},
 			"description": schema.StringAttribute{
 				MarkdownDescription: "The description of the Channel.",
@@ -56,11 +62,17 @@ func (r *chatChannelResource) Schema(_ context.Context, _ resource.SchemaRequest
 				MarkdownDescription: "The visibility of the Channel. One of `PUBLIC`, `PRIVATE`.",
 				Optional:            true,
 				Computed:            true,
+				Validators: []validator.String{
+					stringvalidator.OneOf("PUBLIC", "PRIVATE"),
+				},
 			},
 			"user_ids": schema.ListAttribute{
 				ElementType:         types.StringType,
 				MarkdownDescription: "User IDs to add to the channel (up to 100).",
 				Optional:            true,
+				Validators: []validator.List{
+					listvalidator.SizeAtMost(100),
+				},
 			},
 			"creator": schema.StringAttribute{
 				MarkdownDescription: "ID of the user who created the channel.",

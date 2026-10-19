@@ -4,10 +4,13 @@ package provider
 import (
 	"context"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 )
 
 // --- task_dependency ---
@@ -31,10 +34,16 @@ func taskDependencySchema(_ context.Context) schema.Schema {
 			"depends_on_id": schema.StringAttribute{
 				Optional:      true,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("dependency_of")),
+				},
 			},
 			"dependency_of": schema.StringAttribute{
 				Optional:      true,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("depends_on_id")),
+				},
 			},
 			"type": schema.StringAttribute{
 				Optional:      true,
@@ -133,6 +142,9 @@ func taskGuestSchema(_ context.Context) schema.Schema {
 			"permission_level": schema.StringAttribute{
 				Required:      true,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
+				Validators: []validator.String{
+					stringvalidator.OneOf("read", "comment", "edit", "create"),
+				},
 			},
 		},
 	}
@@ -159,6 +171,9 @@ func folderGuestSchema(_ context.Context) schema.Schema {
 			"permission_level": schema.StringAttribute{
 				Required:      true,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
+				Validators: []validator.String{
+					stringvalidator.OneOf("read", "comment", "edit", "create"),
+				},
 			},
 		},
 	}
@@ -185,6 +200,9 @@ func listGuestSchema(_ context.Context) schema.Schema {
 			"permission_level": schema.StringAttribute{
 				Required:      true,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
+				Validators: []validator.String{
+					stringvalidator.OneOf("read", "comment", "edit", "create"),
+				},
 			},
 		},
 	}
