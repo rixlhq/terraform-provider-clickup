@@ -6,7 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
@@ -20,6 +22,8 @@ import (
 func newTeamUserResource() resource.Resource {
 	return &teamUserResource{}
 }
+
+var _ resource.ResourceWithImportState = &teamUserResource{}
 
 type teamUserResource struct {
 	client *clickupclient.Client
@@ -186,4 +190,15 @@ func extractGuestIDFromTeamResponse(raw []byte) (string, error) {
 // Same structure as guest: { "team": { "members": [{ "user": { "id": 123 } }] } }.
 func extractUserIDFromTeamResponse(raw []byte) (string, error) {
 	return extractGuestIDFromTeamResponse(raw) // same structure
+}
+
+// ImportState imports an existing team user using team_id:user_id format.
+func (r *teamUserResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	parts := strings.SplitN(req.ID, ":", 2)
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		resp.Diagnostics.AddError("Invalid Import ID", "expected team_id:user_id format")
+		return
+	}
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("team_id"), parts[0])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("user_id"), parts[1])...)
 }
