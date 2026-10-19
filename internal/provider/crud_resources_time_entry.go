@@ -2,11 +2,14 @@ package provider
 
 import (
 	"context"
+	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -79,6 +82,9 @@ func timeEntrySchema(_ context.Context) schema.Schema {
 			},
 			"tag_action": schema.StringAttribute{
 				Optional: true,
+				Validators: []validator.String{
+					stringvalidator.OneOf("add", "remove"),
+				},
 			},
 		},
 	}
@@ -117,6 +123,12 @@ func teamGuestSchema(_ context.Context) schema.Schema {
 				Required: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
+				},
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(
+						regexp.MustCompile(`^[^@\s]+@[^@\s]+\.[^@\s]+$`),
+						"must be a valid email address",
+					),
 				},
 			},
 			"can_edit_tags": schema.BoolAttribute{
@@ -170,6 +182,12 @@ func teamUserSchema(_ context.Context) schema.Schema {
 				Required: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
+				},
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(
+						regexp.MustCompile(`^[^@\s]+@[^@\s]+\.[^@\s]+$`),
+						"must be a valid email address",
+					),
 				},
 			},
 			"username": schema.StringAttribute{

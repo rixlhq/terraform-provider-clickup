@@ -63,7 +63,7 @@ run = [
 
 [tasks.docs]
 description = "Generate Terraform Registry docs from the ClickUp OpenAPI spec"
-run = ["tfplugindocs generate"]
+run = ["tfplugindocs generate --provider-name terraform-provider-clickup"]
 
 [tasks.generate-v3]
 description = "Generate the typed V3 API client from ClickUp_PUBLIC_API_V3.yaml using ogen"
@@ -73,7 +73,7 @@ run = ["ogen --target internal/clickupv3 --package clickupv3 --config internal/c
 description = "Default local development check"
 run = [
   { task = "fmt" },
+  { task = "lint" },
   { task = "build" },
   { task = "test" },
-  { task = "lint" },
 ]
