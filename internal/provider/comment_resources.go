@@ -19,6 +19,7 @@ import (
 // PUT    /v2/comment/{comment_id} (update — uses the reply's own comment_id)
 // DELETE /v2/comment/{comment_id} (delete — uses the reply's own comment_id)
 // No single-GET; replies are read from the parent comment's reply list.
+// newCommentReplyResource returns a resource instance for replying to comments.
 func newCommentReplyResource() resource.Resource {
 	return &genericResource{
 		name:             "comment_reply",
@@ -37,6 +38,7 @@ func newCommentReplyResource() resource.Resource {
 	}
 }
 
+// commentReplySchema returns the schema for the clickup_comment_reply resource.
 func commentReplySchema(_ context.Context) schema.Schema {
 	return schema.Schema{
 		MarkdownDescription: "Replies to an existing ClickUp comment. The reply is itself a comment, updatable and deletable via the comment endpoint.",

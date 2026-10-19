@@ -8,6 +8,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 )
 
+// newTaskCommentResource returns a resource instance for managing task comments.
+// newTaskCommentResource returns a resource instance for managing task comments.
+// newTaskCommentResource returns a resource instance for managing task comments.
 func newTaskCommentResource() resource.Resource {
 	return &genericResource{
 		name:             "task_comment",
@@ -32,6 +35,9 @@ func newTaskCommentResource() resource.Resource {
 	}
 }
 
+// taskCommentSchema returns the schema for the clickup_task_comment resource.
+// taskCommentSchema returns the schema for the clickup_task_comment resource.
+// taskCommentSchema returns the schema for the clickup_task_comment resource.
 func taskCommentSchema(_ context.Context) schema.Schema {
 	return schema.Schema{
 		Attributes: map[string]schema.Attribute{

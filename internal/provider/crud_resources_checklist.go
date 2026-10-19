@@ -16,6 +16,7 @@ import (
 // PUT  /v2/checklist/{checklist_id} (update)
 // DELETE /v2/checklist/{checklist_id} (delete)
 // No GET on checklist endpoint; read from task GET (checklists array).
+// newTaskChecklistResource returns a resource instance for managing task checklists.
 func newTaskChecklistResource() resource.Resource {
 	return &genericResource{
 		name:               "task_checklist",
@@ -35,6 +36,7 @@ func newTaskChecklistResource() resource.Resource {
 	}
 }
 
+// taskChecklistSchema returns the schema for the clickup_task_checklist resource.
 func taskChecklistSchema(_ context.Context) schema.Schema {
 	return schema.Schema{
 		MarkdownDescription: "Manages a checklist on a ClickUp task.",
@@ -74,6 +76,7 @@ func taskChecklistSchema(_ context.Context) schema.Schema {
 // Read returns state as-is; drift is detected on the next plan.
 // Create response wraps the item inside { "checklist": { "items": [...] } },
 // so we use idFromBody to extract from checklist.items[].id (last entry).
+// newChecklistItemResource returns a resource instance for managing checklist items.
 func newChecklistItemResource() resource.Resource {
 	return &genericResource{
 		name:                    "checklist_item",
@@ -91,6 +94,7 @@ func newChecklistItemResource() resource.Resource {
 	}
 }
 
+// checklistItemSchema returns the schema for the clickup_checklist_item resource.
 func checklistItemSchema(_ context.Context) schema.Schema {
 	return schema.Schema{
 		MarkdownDescription: "Manages an item within a ClickUp checklist.",

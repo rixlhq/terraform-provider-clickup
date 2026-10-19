@@ -18,14 +18,38 @@ type auditLogsDataSource struct {
 	client *clickupv3.Client
 }
 
+// newAuditLogsDataSource returns a data source instance for clickup_audit_logs.
+// newAuditLogsDataSource returns a data source instance for clickup_audit_logs.
+// newAuditLogsDataSource returns a data source instance for clickup_audit_logs.
+// newAuditLogsDataSource returns a data source instance for clickup_audit_logs.
+// newAuditLogsDataSource returns a data source instance for clickup_audit_logs.
+// newAuditLogsDataSource returns a data source instance for clickup_audit_logs.
+// newAuditLogsDataSource returns a data source instance for clickup_audit_logs.
+// newAuditLogsDataSource returns a data source instance for clickup_audit_logs.
 func newAuditLogsDataSource() datasource.DataSource {
 	return &auditLogsDataSource{}
 }
 
+// Metadata sets the data source type name for clickup_audit_logs.
+// Metadata sets the data source type name for clickup_audit_logs.
+// Metadata sets the data source type name for clickup_audit_logs.
+// Metadata sets the data source type name for clickup_audit_logs.
+// Metadata sets the data source type name for clickup_audit_logs.
+// Metadata sets the data source type name for clickup_audit_logs.
+// Metadata sets the data source type name for clickup_audit_logs.
+// Metadata sets the data source type name for clickup_audit_logs.
 func (d *auditLogsDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "clickup_audit_logs"
 }
 
+// Schema defines the schema for clickup_audit_logs.
+// Schema defines the schema for clickup_audit_logs.
+// Schema defines the schema for clickup_audit_logs.
+// Schema defines the schema for clickup_audit_logs.
+// Schema defines the schema for clickup_audit_logs.
+// Schema defines the schema for clickup_audit_logs.
+// Schema defines the schema for clickup_audit_logs.
+// Schema defines the schema for clickup_audit_logs.
 func (d *auditLogsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Queries ClickUp audit logs via the V3 API. Returns the raw JSON response; use `jsondecode()` to parse.",
@@ -46,6 +70,14 @@ func (d *auditLogsDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 	}
 }
 
+// Configure initializes the ClickUp client for the audit logs data source.
+// Configure initializes the ClickUp client for the audit logs data source.
+// Configure initializes the ClickUp client for the audit logs data source.
+// Configure initializes the ClickUp client for the audit logs data source.
+// Configure initializes the ClickUp client for the audit logs data source.
+// Configure initializes the ClickUp client for the audit logs data source.
+// Configure initializes the ClickUp client for the audit logs data source.
+// Configure initializes the ClickUp client for the audit logs data source.
 func (d *auditLogsDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -64,6 +96,14 @@ type auditLogsModel struct {
 	Result        types.String `tfsdk:"result"`
 }
 
+// Read queries audit logs from ClickUp via GET.
+// Read queries audit logs from ClickUp via GET.
+// Read queries audit logs from ClickUp via GET.
+// Read queries audit logs from ClickUp via GET.
+// Read queries audit logs from ClickUp via GET.
+// Read queries audit logs from ClickUp via GET.
+// Read queries audit logs from ClickUp via GET.
+// Read queries audit logs from ClickUp via GET.
 func (d *auditLogsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	if d.client == nil {
 		resp.Diagnostics.AddError("Missing ClickUp V3 Client", "Configure the provider with api_token to use this data source.")

@@ -61,7 +61,8 @@ def emit_datasources(config: dict) -> str:
         path = normalize_path_params(data_sources[name]["read"]["path"])
         imports.append(f'\t{pkg} "github.com/rixlhq/terraform-provider-clickup/internal/provider/generated/{pkg}"')
         constructors.append(
-            f"""func new{camel}DataSource() datasource.DataSource {{
+            f"""// new{camel}DataSource returns a new data source instance for {name}.
+func new{camel}DataSource() datasource.DataSource {{
 \treturn &genericDataSource{{
 \t\tname:       {json.dumps(name)},
 \t\tpath:       {json.dumps(path)},
@@ -339,6 +340,7 @@ def write_resource(
     schema_func: str,
 ) -> None:
     pascal = snake_to_pascal(name)
+    lines.append(f"// new{pascal}Resource returns a resource instance for {name}.")
     lines.append(f"func new{pascal}Resource() resource.Resource {{")
     lines.append("\treturn &genericResource{")
     lines.append(f'\t\tname:             "{name}",')

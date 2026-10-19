@@ -24,6 +24,7 @@ func JSONToTfValueWithUnknownMissing(ctx context.Context, t tftypes.Type, v any)
 	return jsonToTfValueInternal(ctx, t, v, true)
 }
 
+// jsonToTfValueInternal converts an unmarshaled JSON value into a tftypes.Value matching the target Terraform type.
 func jsonToTfValueInternal(ctx context.Context, t tftypes.Type, v any, unknownMissing bool) (tftypes.Value, error) {
 	if v == nil {
 		return tftypes.NewValue(t, nil), nil
@@ -77,6 +78,7 @@ func jsonToTfValueInternal(ctx context.Context, t tftypes.Type, v any, unknownMi
 	}
 }
 
+// jsonToTfObject converts a JSON object map into a Terraform Object value.
 func jsonToTfObject(ctx context.Context, t tftypes.Type, ty tftypes.Object, v any, unknownMissing bool) (tftypes.Value, error) {
 	m, ok := v.(map[string]any)
 	if !ok {
@@ -110,6 +112,7 @@ func jsonToTfObject(ctx context.Context, t tftypes.Type, ty tftypes.Object, v an
 	return tftypes.NewValue(t, vals), nil
 }
 
+// jsonToTfList converts a JSON slice into a Terraform List value.
 func jsonToTfList(ctx context.Context, t tftypes.Type, elemType tftypes.Type, v any, unknownMissing bool) (tftypes.Value, error) {
 	s, ok := v.([]any)
 	if !ok {
@@ -126,6 +129,7 @@ func jsonToTfList(ctx context.Context, t tftypes.Type, elemType tftypes.Type, v 
 	return tftypes.NewValue(t, vals), nil
 }
 
+// jsonToTfMap converts a JSON object map into a Terraform Map value.
 func jsonToTfMap(ctx context.Context, t tftypes.Type, ty tftypes.Map, v any, unknownMissing bool) (tftypes.Value, error) {
 	m, ok := v.(map[string]any)
 	if !ok {
@@ -142,6 +146,7 @@ func jsonToTfMap(ctx context.Context, t tftypes.Type, ty tftypes.Map, v any, unk
 	return tftypes.NewValue(t, vals), nil
 }
 
+// jsonToTfTuple converts a JSON slice into a Terraform Tuple value.
 func jsonToTfTuple(ctx context.Context, t tftypes.Type, ty tftypes.Tuple, v any, unknownMissing bool) (tftypes.Value, error) {
 	s, ok := v.([]any)
 	if !ok || len(s) != len(ty.ElementTypes) {
@@ -158,6 +163,7 @@ func jsonToTfTuple(ctx context.Context, t tftypes.Type, ty tftypes.Tuple, v any,
 	return tftypes.NewValue(t, vals), nil
 }
 
+// toString converts a string or numeric JSON value into a string.
 func toString(v any) (string, bool) {
 	switch val := v.(type) {
 	case string:
@@ -173,6 +179,7 @@ func toString(v any) (string, bool) {
 	}
 }
 
+// toBigFloat converts an arbitrary JSON numeric or numeric-string value into a *big.Float.
 func toBigFloat(v any) (*big.Float, bool) {
 	switch val := v.(type) {
 	case json.Number:
@@ -198,6 +205,7 @@ func toBigFloat(v any) (*big.Float, bool) {
 	}
 }
 
+// dynamicjsonToTfValue dynamically infers the Terraform type and value from an arbitrary JSON value.
 func dynamicjsonToTfValue(v any) (tftypes.Value, error) {
 	switch val := v.(type) {
 	case nil:

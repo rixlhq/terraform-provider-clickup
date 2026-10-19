@@ -32,14 +32,17 @@ type folderResourceModel struct {
 	TaskCount        types.Int64  `tfsdk:"task_count"`
 }
 
+// newFolderResource returns a new ClickUp folder resource instance.
 func newFolderResource() resource.Resource {
 	return &folderResource{}
 }
 
+// Metadata sets the resource type name for clickup_folder.
 func (r *folderResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_folder"
 }
 
+// Schema defines the schema and attributes for clickup_folder.
 func (r *folderResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
@@ -77,6 +80,7 @@ func (r *folderResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 	}
 }
 
+// Configure initializes the ClickUp client for the folder resource.
 func (r *folderResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -89,6 +93,7 @@ func (r *folderResource) Configure(_ context.Context, req resource.ConfigureRequ
 	r.client = pd.ClickUp
 }
 
+// Create creates a new folder in the specified ClickUp space.
 func (r *folderResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data folderResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -117,6 +122,7 @@ func (r *folderResource) Create(ctx context.Context, req resource.CreateRequest,
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read refreshes the folder state from the ClickUp API.
 func (r *folderResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data folderResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -137,6 +143,7 @@ func (r *folderResource) Read(ctx context.Context, req resource.ReadRequest, res
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates an existing folder in ClickUp.
 func (r *folderResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var stateData, planData folderResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &stateData)...)
@@ -171,6 +178,7 @@ func (r *folderResource) Update(ctx context.Context, req resource.UpdateRequest,
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete removes a folder from ClickUp.
 func (r *folderResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data folderResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)

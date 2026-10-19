@@ -12,6 +12,7 @@ import (
 	"github.com/rixlhq/terraform-provider-clickup/internal/clickupclient"
 )
 
+// Create creates a new webhook for a ClickUp team.
 func (r *webhookResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data webhookResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -49,6 +50,7 @@ func (r *webhookResource) Create(ctx context.Context, req resource.CreateRequest
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Read refreshes the webhook state from the ClickUp API.
 func (r *webhookResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data webhookResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -66,6 +68,7 @@ func (r *webhookResource) Read(ctx context.Context, req resource.ReadRequest, re
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Update updates the endpoint, events, or status of an existing ClickUp webhook.
 func (r *webhookResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var stateData, planData webhookResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &stateData)...)
@@ -109,6 +112,7 @@ func (r *webhookResource) Update(ctx context.Context, req resource.UpdateRequest
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// Delete deletes a webhook from ClickUp.
 func (r *webhookResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data webhookResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -124,6 +128,7 @@ func (r *webhookResource) Delete(ctx context.Context, req resource.DeleteRequest
 	}
 }
 
+// ImportState imports an existing webhook using the format team_id:webhook_id.
 func (r *webhookResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	parts := strings.SplitN(req.ID, ":", 2)
 	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {

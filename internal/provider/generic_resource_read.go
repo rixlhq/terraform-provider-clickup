@@ -50,6 +50,7 @@ func (r *genericResource) queryParams(_ context.Context, v tftypes.Value) (url.V
 	return query, diags
 }
 
+// getAndDecode fetches and decodes the JSON payload for a resource, supporting both single-item and paginated list endpoints.
 func (r *genericResource) getAndDecode(ctx context.Context, readPath, id string, query url.Values) (any, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	if !r.readFromList {

@@ -15,6 +15,7 @@ import (
 
 var errWebhookNotFound = errors.New("webhook not found in list")
 
+// buildCreateBody constructs the JSON payload for creating a ClickUp webhook.
 func (r *webhookResource) buildCreateBody(ctx context.Context, data webhookResourceModel) ([]byte, error) {
 	body := map[string]any{
 		"endpoint": data.Endpoint.ValueString(),
@@ -37,6 +38,7 @@ func (r *webhookResource) buildCreateBody(ctx context.Context, data webhookResou
 	return json.Marshal(body)
 }
 
+// buildUpdateBody constructs the JSON payload for updating an existing webhook.
 func (r *webhookResource) buildUpdateBody(ctx context.Context, data webhookResourceModel) ([]byte, error) {
 	// The ClickUp spec documents update "events" as a single string value.
 	// Send a comma-separated string if multiple events are configured.
@@ -57,6 +59,8 @@ func (r *webhookResource) buildUpdateBody(ctx context.Context, data webhookResou
 	return json.Marshal(body)
 }
 
+// eventsAsStrings extracts a string slice from a Terraform list of strings.
+// eventsAsStrings extracts a string slice from a Terraform list of strings.
 func (r *webhookResource) eventsAsStrings(_ context.Context, events types.List) []string {
 	if events.IsNull() || events.IsUnknown() {
 		return nil
@@ -70,6 +74,7 @@ func (r *webhookResource) eventsAsStrings(_ context.Context, events types.List) 
 	return out
 }
 
+// refresh queries the ClickUp API to update the webhook model in place.
 func (r *webhookResource) refresh(ctx context.Context, data *webhookResourceModel, diags *diag.Diagnostics) bool {
 	webhook, err := r.getWebhook(ctx, data.TeamId.ValueInt64(), data.WebhookId.ValueString())
 	if err != nil {
@@ -84,6 +89,8 @@ func (r *webhookResource) refresh(ctx context.Context, data *webhookResourceMode
 	return true
 }
 
+// getWebhook fetches all team webhooks and finds the matching webhook ID.
+// getWebhook fetches all team webhooks and finds the matching webhook ID.
 func (r *webhookResource) getWebhook(ctx context.Context, teamID int64, webhookID string) (map[string]any, error) {
 	path := "/v2/team/" + strconv.FormatInt(teamID, 10) + "/webhook"
 	raw, err := r.client.Get(ctx, path, nil)
@@ -117,6 +124,8 @@ func (r *webhookResource) getWebhook(ctx context.Context, teamID int64, webhookI
 	return nil, errWebhookNotFound
 }
 
+// mapWebhookToModel maps raw webhook JSON fields into the Terraform model.
+// mapWebhookToModel maps raw webhook JSON fields into the Terraform model.
 func (r *webhookResource) mapWebhookToModel(ctx context.Context, wh map[string]any, data *webhookResourceModel) {
 	data.WebhookId = stringOrNull(wh["id"])
 	data.ClientId = stringOrNull(wh["client_id"])

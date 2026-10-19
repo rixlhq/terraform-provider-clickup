@@ -96,6 +96,7 @@ var dataSourceFactories = []func() datasource.DataSource{
 	newWorkspaceSeatsDataSource,
 }
 
+// newAccessibleCustomFieldsDataSource returns a new data source instance for accessible_custom_fields.
 func newAccessibleCustomFieldsDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "accessible_custom_fields",
@@ -103,6 +104,8 @@ func newAccessibleCustomFieldsDataSource() datasource.DataSource {
 		schemaFunc: datasource_accessible_custom_fields.AccessibleCustomFieldsDataSourceSchema,
 	}
 }
+
+// newAuthorizedTeamsDataSource returns a new data source instance for authorized_teams.
 func newAuthorizedTeamsDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "authorized_teams",
@@ -110,6 +113,8 @@ func newAuthorizedTeamsDataSource() datasource.DataSource {
 		schemaFunc: datasource_authorized_teams.AuthorizedTeamsDataSourceSchema,
 	}
 }
+
+// newAuthorizedUserDataSource returns a new data source instance for authorized_user.
 func newAuthorizedUserDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "authorized_user",
@@ -117,6 +122,8 @@ func newAuthorizedUserDataSource() datasource.DataSource {
 		schemaFunc: datasource_authorized_user.AuthorizedUserDataSourceSchema,
 	}
 }
+
+// newChatViewCommentsDataSource returns a new data source instance for chat_view_comments.
 func newChatViewCommentsDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "chat_view_comments",
@@ -124,6 +131,8 @@ func newChatViewCommentsDataSource() datasource.DataSource {
 		schemaFunc: datasource_chat_view_comments.ChatViewCommentsDataSourceSchema,
 	}
 }
+
+// newCustomItemsDataSource returns a new data source instance for custom_items.
 func newCustomItemsDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "custom_items",
@@ -131,6 +140,8 @@ func newCustomItemsDataSource() datasource.DataSource {
 		schemaFunc: datasource_custom_items.CustomItemsDataSourceSchema,
 	}
 }
+
+// newCustomRolesDataSource returns a new data source instance for custom_roles.
 func newCustomRolesDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "custom_roles",
@@ -138,6 +149,8 @@ func newCustomRolesDataSource() datasource.DataSource {
 		schemaFunc: datasource_custom_roles.CustomRolesDataSourceSchema,
 	}
 }
+
+// newFilteredTeamTasksDataSource returns a new data source instance for filtered_team_tasks.
 func newFilteredTeamTasksDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "filtered_team_tasks",
@@ -145,6 +158,8 @@ func newFilteredTeamTasksDataSource() datasource.DataSource {
 		schemaFunc: datasource_filtered_team_tasks.FilteredTeamTasksDataSourceSchema,
 	}
 }
+
+// newFolderAvailableFieldsDataSource returns a new data source instance for folder_available_fields.
 func newFolderAvailableFieldsDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "folder_available_fields",
@@ -152,6 +167,8 @@ func newFolderAvailableFieldsDataSource() datasource.DataSource {
 		schemaFunc: datasource_folder_available_fields.FolderAvailableFieldsDataSourceSchema,
 	}
 }
+
+// newFolderTemplatesDataSource returns a new data source instance for folder_templates.
 func newFolderTemplatesDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "folder_templates",
@@ -159,6 +176,8 @@ func newFolderTemplatesDataSource() datasource.DataSource {
 		schemaFunc: datasource_folder_templates.FolderTemplatesDataSourceSchema,
 	}
 }
+
+// newFolderViewsDataSource returns a new data source instance for folder_views.
 func newFolderViewsDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "folder_views",
@@ -166,6 +185,8 @@ func newFolderViewsDataSource() datasource.DataSource {
 		schemaFunc: datasource_folder_views.FolderViewsDataSourceSchema,
 	}
 }
+
+// newFolderlessListsDataSource returns a new data source instance for folderless_lists.
 func newFolderlessListsDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "folderless_lists",
@@ -173,6 +194,8 @@ func newFolderlessListsDataSource() datasource.DataSource {
 		schemaFunc: datasource_folderless_lists.FolderlessListsDataSourceSchema,
 	}
 }
+
+// newFoldersDataSource returns a new data source instance for folders.
 func newFoldersDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "folders",
@@ -180,6 +203,8 @@ func newFoldersDataSource() datasource.DataSource {
 		schemaFunc: datasource_folders.FoldersDataSourceSchema,
 	}
 }
+
+// newGoalDataSource returns a new data source instance for goal.
 func newGoalDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "goal",
@@ -187,6 +212,8 @@ func newGoalDataSource() datasource.DataSource {
 		schemaFunc: datasource_goal.GoalDataSourceSchema,
 	}
 }
+
+// newGuestDataSource returns a new data source instance for guest.
 func newGuestDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "guest",
@@ -194,6 +221,8 @@ func newGuestDataSource() datasource.DataSource {
 		schemaFunc: datasource_guest.GuestDataSourceSchema,
 	}
 }
+
+// newListDataSource returns a new data source instance for list.
 func newListDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "list",
@@ -201,6 +230,8 @@ func newListDataSource() datasource.DataSource {
 		schemaFunc: datasource_list.ListDataSourceSchema,
 	}
 }
+
+// newListCommentsDataSource returns a new data source instance for list_comments.
 func newListCommentsDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "list_comments",
@@ -208,6 +239,8 @@ func newListCommentsDataSource() datasource.DataSource {
 		schemaFunc: datasource_list_comments.ListCommentsDataSourceSchema,
 	}
 }
+
+// newListMembersDataSource returns a new data source instance for list_members.
 func newListMembersDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "list_members",
@@ -215,6 +248,8 @@ func newListMembersDataSource() datasource.DataSource {
 		schemaFunc: datasource_list_members.ListMembersDataSourceSchema,
 	}
 }
+
+// newListTemplatesDataSource returns a new data source instance for list_templates.
 func newListTemplatesDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "list_templates",
@@ -222,6 +257,8 @@ func newListTemplatesDataSource() datasource.DataSource {
 		schemaFunc: datasource_list_templates.ListTemplatesDataSourceSchema,
 	}
 }
+
+// newListViewsDataSource returns a new data source instance for list_views.
 func newListViewsDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "list_views",
@@ -229,6 +266,8 @@ func newListViewsDataSource() datasource.DataSource {
 		schemaFunc: datasource_list_views.ListViewsDataSourceSchema,
 	}
 }
+
+// newListsDataSource returns a new data source instance for lists.
 func newListsDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "lists",
@@ -236,6 +275,8 @@ func newListsDataSource() datasource.DataSource {
 		schemaFunc: datasource_lists.ListsDataSourceSchema,
 	}
 }
+
+// newRunningTimeEntryDataSource returns a new data source instance for running_time_entry.
 func newRunningTimeEntryDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "running_time_entry",
@@ -243,6 +284,8 @@ func newRunningTimeEntryDataSource() datasource.DataSource {
 		schemaFunc: datasource_running_time_entry.RunningTimeEntryDataSourceSchema,
 	}
 }
+
+// newSharedHierarchyDataSource returns a new data source instance for shared_hierarchy.
 func newSharedHierarchyDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "shared_hierarchy",
@@ -250,6 +293,8 @@ func newSharedHierarchyDataSource() datasource.DataSource {
 		schemaFunc: datasource_shared_hierarchy.SharedHierarchyDataSourceSchema,
 	}
 }
+
+// newSpaceDataSource returns a new data source instance for space.
 func newSpaceDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "space",
@@ -257,6 +302,8 @@ func newSpaceDataSource() datasource.DataSource {
 		schemaFunc: datasource_space.SpaceDataSourceSchema,
 	}
 }
+
+// newSpaceAvailableFieldsDataSource returns a new data source instance for space_available_fields.
 func newSpaceAvailableFieldsDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "space_available_fields",
@@ -264,6 +311,8 @@ func newSpaceAvailableFieldsDataSource() datasource.DataSource {
 		schemaFunc: datasource_space_available_fields.SpaceAvailableFieldsDataSourceSchema,
 	}
 }
+
+// newSpaceTagsDataSource returns a new data source instance for space_tags.
 func newSpaceTagsDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "space_tags",
@@ -271,6 +320,8 @@ func newSpaceTagsDataSource() datasource.DataSource {
 		schemaFunc: datasource_space_tags.SpaceTagsDataSourceSchema,
 	}
 }
+
+// newSpaceViewsDataSource returns a new data source instance for space_views.
 func newSpaceViewsDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "space_views",
@@ -278,6 +329,8 @@ func newSpaceViewsDataSource() datasource.DataSource {
 		schemaFunc: datasource_space_views.SpaceViewsDataSourceSchema,
 	}
 }
+
+// newSpacesDataSource returns a new data source instance for spaces.
 func newSpacesDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "spaces",
@@ -285,6 +338,8 @@ func newSpacesDataSource() datasource.DataSource {
 		schemaFunc: datasource_spaces.SpacesDataSourceSchema,
 	}
 }
+
+// newTaskCommentsDataSource returns a new data source instance for task_comments.
 func newTaskCommentsDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "task_comments",
@@ -292,6 +347,8 @@ func newTaskCommentsDataSource() datasource.DataSource {
 		schemaFunc: datasource_task_comments.TaskCommentsDataSourceSchema,
 	}
 }
+
+// newTaskMembersDataSource returns a new data source instance for task_members.
 func newTaskMembersDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "task_members",
@@ -299,6 +356,8 @@ func newTaskMembersDataSource() datasource.DataSource {
 		schemaFunc: datasource_task_members.TaskMembersDataSourceSchema,
 	}
 }
+
+// newTaskTemplatesDataSource returns a new data source instance for task_templates.
 func newTaskTemplatesDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "task_templates",
@@ -306,6 +365,8 @@ func newTaskTemplatesDataSource() datasource.DataSource {
 		schemaFunc: datasource_task_templates.TaskTemplatesDataSourceSchema,
 	}
 }
+
+// newTasksDataSource returns a new data source instance for tasks.
 func newTasksDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "tasks",
@@ -313,6 +374,8 @@ func newTasksDataSource() datasource.DataSource {
 		schemaFunc: datasource_tasks.TasksDataSourceSchema,
 	}
 }
+
+// newTeamAvailableFieldsDataSource returns a new data source instance for team_available_fields.
 func newTeamAvailableFieldsDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "team_available_fields",
@@ -320,6 +383,8 @@ func newTeamAvailableFieldsDataSource() datasource.DataSource {
 		schemaFunc: datasource_team_available_fields.TeamAvailableFieldsDataSourceSchema,
 	}
 }
+
+// newTeamViewsDataSource returns a new data source instance for team_views.
 func newTeamViewsDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "team_views",
@@ -327,6 +392,8 @@ func newTeamViewsDataSource() datasource.DataSource {
 		schemaFunc: datasource_team_views.TeamViewsDataSourceSchema,
 	}
 }
+
+// newThreadedCommentsDataSource returns a new data source instance for threaded_comments.
 func newThreadedCommentsDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "threaded_comments",
@@ -334,6 +401,8 @@ func newThreadedCommentsDataSource() datasource.DataSource {
 		schemaFunc: datasource_threaded_comments.ThreadedCommentsDataSourceSchema,
 	}
 }
+
+// newTimeEntryDataSource returns a new data source instance for time_entry.
 func newTimeEntryDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "time_entry",
@@ -341,6 +410,8 @@ func newTimeEntryDataSource() datasource.DataSource {
 		schemaFunc: datasource_time_entry.TimeEntryDataSourceSchema,
 	}
 }
+
+// newTimeEntryHistoryDataSource returns a new data source instance for time_entry_history.
 func newTimeEntryHistoryDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "time_entry_history",
@@ -348,6 +419,8 @@ func newTimeEntryHistoryDataSource() datasource.DataSource {
 		schemaFunc: datasource_time_entry_history.TimeEntryHistoryDataSourceSchema,
 	}
 }
+
+// newTimeEntryTagsDataSource returns a new data source instance for time_entry_tags.
 func newTimeEntryTagsDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "time_entry_tags",
@@ -355,6 +428,8 @@ func newTimeEntryTagsDataSource() datasource.DataSource {
 		schemaFunc: datasource_time_entry_tags.TimeEntryTagsDataSourceSchema,
 	}
 }
+
+// newTrackedTimeDataSource returns a new data source instance for tracked_time.
 func newTrackedTimeDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "tracked_time",
@@ -362,6 +437,8 @@ func newTrackedTimeDataSource() datasource.DataSource {
 		schemaFunc: datasource_tracked_time.TrackedTimeDataSourceSchema,
 	}
 }
+
+// newUserDataSource returns a new data source instance for user.
 func newUserDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "user",
@@ -369,6 +446,8 @@ func newUserDataSource() datasource.DataSource {
 		schemaFunc: datasource_user.UserDataSourceSchema,
 	}
 }
+
+// newUserGroupsDataSource returns a new data source instance for user_groups.
 func newUserGroupsDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "user_groups",
@@ -376,6 +455,8 @@ func newUserGroupsDataSource() datasource.DataSource {
 		schemaFunc: datasource_user_groups.UserGroupsDataSourceSchema,
 	}
 }
+
+// newWebhooksDataSource returns a new data source instance for webhooks.
 func newWebhooksDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "webhooks",
@@ -383,6 +464,8 @@ func newWebhooksDataSource() datasource.DataSource {
 		schemaFunc: datasource_webhooks.WebhooksDataSourceSchema,
 	}
 }
+
+// newWorkspacePlanDataSource returns a new data source instance for workspace_plan.
 func newWorkspacePlanDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "workspace_plan",
@@ -390,6 +473,8 @@ func newWorkspacePlanDataSource() datasource.DataSource {
 		schemaFunc: datasource_workspace_plan.WorkspacePlanDataSourceSchema,
 	}
 }
+
+// newWorkspaceSeatsDataSource returns a new data source instance for workspace_seats.
 func newWorkspaceSeatsDataSource() datasource.DataSource {
 	return &genericDataSource{
 		name:       "workspace_seats",

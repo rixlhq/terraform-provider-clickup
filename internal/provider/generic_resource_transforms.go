@@ -49,6 +49,13 @@ func listToAddRemObject(v any) any {
 	return map[string]any{"add": add, "rem": []any{}}
 }
 
+// extractListItemID extracts the identifier from a list item map.
+// extractListItemID extracts the identifier from a list item map.
+// extractListItemID extracts the identifier from a list item map.
+// extractListItemID extracts the identifier from a list item map.
+// extractListItemID extracts the identifier from a list item map.
+// extractListItemID extracts the identifier from a list item map.
+// extractListItemID extracts the identifier from a list item map.
 func extractListItemID(v any) any {
 	obj, ok := v.(map[string]any)
 	if !ok {

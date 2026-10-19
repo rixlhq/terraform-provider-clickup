@@ -54,6 +54,7 @@ func objectFieldToInt(v any) any {
 	return numericFromAny(v)
 }
 
+// priorityNameToInt maps a ClickUp priority label (e.g. "urgent", "high") to its numeric value.
 func priorityNameToInt(name string) any {
 	switch strings.ToLower(name) {
 	case "urgent":
@@ -74,6 +75,7 @@ func priorityNameToInt(name string) any {
 	return nil
 }
 
+// numericFromAny converts an arbitrary value (string, json.Number, int, float) to int64 or nil.
 func numericFromAny(v any) any {
 	switch x := v.(type) {
 	case json.Number:

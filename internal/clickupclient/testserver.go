@@ -47,6 +47,20 @@ func (ts *TestServer) RegisterStatic(method, path string, status int, body any) 
 	})
 }
 
+// ServeHTTP handles incoming HTTP test requests.
+// ServeHTTP handles incoming HTTP test requests.
+// ServeHTTP handles incoming HTTP test requests.
+// ServeHTTP handles incoming HTTP test requests.
+// ServeHTTP handles incoming HTTP test requests.
+// ServeHTTP handles incoming HTTP test requests.
+// ServeHTTP handles incoming HTTP test requests.
+// ServeHTTP handles incoming HTTP test requests.
+// ServeHTTP handles incoming HTTP test requests.
+// ServeHTTP handles incoming HTTP test requests.
+// ServeHTTP handles incoming HTTP test requests.
+// ServeHTTP handles incoming HTTP test requests.
+// ServeHTTP handles incoming HTTP test requests.
+// ServeHTTP handles incoming HTTP test requests.
 func (ts *TestServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ts.mu.Lock()
 	methodHandlers := ts.handlers[r.Method]

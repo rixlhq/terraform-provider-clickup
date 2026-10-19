@@ -35,15 +35,30 @@ type genericDataSource struct {
 	schema     datasource_schema.Schema
 }
 
+// Metadata sets the generic data source type name.
+// Metadata sets the generic data source type name.
+// Metadata sets the generic data source type name.
+// Metadata sets the generic data source type name.
+// Metadata sets the generic data source type name.
 func (d *genericDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_" + d.name
 }
 
+// Schema retrieves the generic data source schema.
+// Schema retrieves the generic data source schema.
+// Schema retrieves the generic data source schema.
+// Schema retrieves the generic data source schema.
+// Schema retrieves the generic data source schema.
 func (d *genericDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	d.schema = d.schemaFunc(ctx)
 	resp.Schema = d.schema
 }
 
+// Configure initializes the ClickUp client on the generic data source.
+// Configure initializes the ClickUp client on the generic data source.
+// Configure initializes the ClickUp client on the generic data source.
+// Configure initializes the ClickUp client on the generic data source.
+// Configure initializes the ClickUp client on the generic data source.
 func (d *genericDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -56,6 +71,11 @@ func (d *genericDataSource) Configure(_ context.Context, req datasource.Configur
 	d.client = pd.ClickUp
 }
 
+// Read queries ClickUp and maps JSON to the data source model.
+// Read queries ClickUp and maps JSON to the data source model.
+// Read queries ClickUp and maps JSON to the data source model.
+// Read queries ClickUp and maps JSON to the data source model.
+// Read queries ClickUp and maps JSON to the data source model.
 func (d *genericDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	if d.client == nil {
 		resp.Diagnostics.AddError("Missing ClickUp Client", "Configure the provider with api_token or CLICKUP_API_TOKEN to use this data source.")
@@ -100,6 +120,11 @@ func (d *genericDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	resp.State.Raw = tfVal
 }
 
+// buildPathAndQuery builds the request path and query parameters from config.
+// buildPathAndQuery builds the request path and query parameters from config.
+// buildPathAndQuery builds the request path and query parameters from config.
+// buildPathAndQuery builds the request path and query parameters from config.
+// buildPathAndQuery builds the request path and query parameters from config.
 func (d *genericDataSource) buildPathAndQuery(v tftypes.Value) (string, url.Values, error) {
 	obj, err := asObject(v)
 	if err != nil {
@@ -144,6 +169,11 @@ func (d *genericDataSource) buildPathAndQuery(v tftypes.Value) (string, url.Valu
 	return path, query, nil
 }
 
+// asObject unmarshals a Terraform Object value into a Go map.
+// asObject unmarshals a Terraform Object value into a Go map.
+// asObject unmarshals a Terraform Object value into a Go map.
+// asObject unmarshals a Terraform Object value into a Go map.
+// asObject unmarshals a Terraform Object value into a Go map.
 func asObject(v tftypes.Value) (map[string]tftypes.Value, error) {
 	if v.IsNull() || !v.IsKnown() {
 		return nil, errors.New("value is null or unknown")
@@ -159,6 +189,11 @@ func asObject(v tftypes.Value) (map[string]tftypes.Value, error) {
 	return m, nil
 }
 
+// valueAsStrings extracts a string slice from a Terraform collection value.
+// valueAsStrings extracts a string slice from a Terraform collection value.
+// valueAsStrings extracts a string slice from a Terraform collection value.
+// valueAsStrings extracts a string slice from a Terraform collection value.
+// valueAsStrings extracts a string slice from a Terraform collection value.
 func valueAsStrings(v tftypes.Value) ([]string, error) {
 	switch v.Type().(type) {
 	case tftypes.List, tftypes.Set, tftypes.Tuple:
@@ -216,6 +251,11 @@ func appendQueryValue(query url.Values, key string, v tftypes.Value, bracketed b
 	return fmt.Errorf("cannot use %s as a query parameter value", t)
 }
 
+// valueAsString extracts a string representation from a scalar Terraform value.
+// valueAsString extracts a string representation from a scalar Terraform value.
+// valueAsString extracts a string representation from a scalar Terraform value.
+// valueAsString extracts a string representation from a scalar Terraform value.
+// valueAsString extracts a string representation from a scalar Terraform value.
 func valueAsString(v tftypes.Value) (string, error) {
 	if v.IsNull() || !v.IsKnown() {
 		return "", errors.New("value is null or unknown")

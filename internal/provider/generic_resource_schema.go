@@ -15,6 +15,8 @@ import (
 	"github.com/rixlhq/terraform-provider-clickup/internal/provider/clickupcommon"
 )
 
+// addMissingPathParamAttributes injects any path parameters missing from the schema as required strings.
+// addMissingPathParamAttributes injects any path parameters missing from the schema as required strings.
 func (r *genericResource) addMissingPathParamAttributes(s resource_schema.Schema) resource_schema.Schema {
 	if r.createPath == "" || s.Attributes == nil {
 		return s
@@ -41,6 +43,8 @@ func (r *genericResource) addMissingPathParamAttributes(s resource_schema.Schema
 	return s
 }
 
+// withRequiresReplace marks a schema attribute as requiring resource replacement on plan changes.
+// withRequiresReplace marks a schema attribute as requiring resource replacement on plan changes.
 func withRequiresReplace(attr resource_schema.Attribute) resource_schema.Attribute {
 	switch a := attr.(type) {
 	case resource_schema.StringAttribute:
@@ -56,6 +60,8 @@ func withRequiresReplace(attr resource_schema.Attribute) resource_schema.Attribu
 	return attr
 }
 
+// withPathParam injects a path parameter value into a Terraform Object value.
+// withPathParam injects a path parameter value into a Terraform Object value.
 func (r *genericResource) withPathParam(ctx context.Context, v tftypes.Value, param, id string) (tftypes.Value, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	obj, err := asObject(v)

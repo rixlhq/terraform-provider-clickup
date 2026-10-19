@@ -11,6 +11,7 @@ import (
 	"github.com/rixlhq/terraform-provider-clickup/internal/provider/clickupcommon"
 )
 
+// Update updates an existing ClickUp resource via PUT or PATCH.
 func (r *genericResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	if r.client == nil {
 		resp.Diagnostics.AddError("Missing ClickUp Client", "Configure the provider with api_token or CLICKUP_API_TOKEN to use this resource.")
@@ -94,6 +95,7 @@ func (r *genericResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 }
 
+// Delete removes a resource from ClickUp via DELETE.
 func (r *genericResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	if r.client == nil {
 		resp.Diagnostics.AddError("Missing ClickUp Client", "Configure the provider with api_token or CLICKUP_API_TOKEN to use this resource.")
@@ -115,6 +117,7 @@ func (r *genericResource) Delete(ctx context.Context, req resource.DeleteRequest
 	}
 }
 
+// readModel reads the updated resource from ClickUp and converts it to a Terraform value.
 func (r *genericResource) readModel(ctx context.Context, base tftypes.Value, id string) (tftypes.Value, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	param := r.idParam()

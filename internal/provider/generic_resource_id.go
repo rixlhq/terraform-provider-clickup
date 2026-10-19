@@ -9,6 +9,7 @@ import (
 	"github.com/rixlhq/terraform-provider-clickup/internal/provider/clickupcommon"
 )
 
+// extractID extracts the resource identifier from a create response or request body.
 func (r *genericResource) extractID(raw []byte) (string, error) {
 	v, err := clickupcommon.DecodeJSONResponse(raw)
 	if err != nil {
@@ -84,6 +85,7 @@ func (r *genericResource) resolveResourceID(raw, body []byte) (string, error) {
 	return valueToIDString(v), nil
 }
 
+// valueToIDString converts an arbitrary ID representation into a string.
 func valueToIDString(v any) string {
 	if v == nil {
 		return ""
@@ -108,4 +110,5 @@ func valueToIDString(v any) string {
 // notFoundError is used to signal that a resource was not found during a read.
 type notFoundError struct{ message string }
 
+// Error formats the notFoundError message.
 func (e *notFoundError) Error() string { return e.message }

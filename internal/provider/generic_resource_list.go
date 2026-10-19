@@ -7,6 +7,16 @@ import (
 	"strings"
 )
 
+// listItems traverses a JSON response to extract the items slice at readListRoot.
+// listItems traverses a JSON response to extract the items slice at readListRoot.
+// listItems traverses a JSON response to extract the items slice at readListRoot.
+// listItems traverses a JSON response to extract the items slice at readListRoot.
+// listItems traverses a JSON response to extract the items slice at readListRoot.
+// listItems traverses a JSON response to extract the items slice at readListRoot.
+// listItems traverses a JSON response to extract the items slice at readListRoot.
+// listItems traverses a JSON response to extract the items slice at readListRoot.
+// listItems traverses a JSON response to extract the items slice at readListRoot.
+// listItems traverses a JSON response to extract the items slice at readListRoot.
 func (r *genericResource) listItems(jv any) ([]any, error) {
 	v := jv
 	for key := range strings.SplitSeq(r.readListRoot, ".") {
@@ -27,6 +37,16 @@ func (r *genericResource) listItems(jv any) ([]any, error) {
 	return items, nil
 }
 
+// findInList traverses a decoded response root to find the item with the given ID.
+// findInList traverses a decoded response root to find the item with the given ID.
+// findInList traverses a decoded response root to find the item with the given ID.
+// findInList traverses a decoded response root to find the item with the given ID.
+// findInList traverses a decoded response root to find the item with the given ID.
+// findInList traverses a decoded response root to find the item with the given ID.
+// findInList traverses a decoded response root to find the item with the given ID.
+// findInList traverses a decoded response root to find the item with the given ID.
+// findInList traverses a decoded response root to find the item with the given ID.
+// findInList traverses a decoded response root to find the item with the given ID.
 func (r *genericResource) findInList(jv any, id string) (any, error) {
 	if _, ok := jv.(map[string]any); !ok {
 		return nil, errors.New("list response is not a JSON object")
@@ -52,6 +72,16 @@ func (r *genericResource) findInList(jv any, id string) (any, error) {
 	return nil, &notFoundError{message: fmt.Sprintf("%s with %s=%q not found in list", r.name, r.readListIDField, id)}
 }
 
+// nextListPageQuery determines if another page of list results exists and advances query parameters.
+// nextListPageQuery determines if another page of list results exists and advances query parameters.
+// nextListPageQuery determines if another page of list results exists and advances query parameters.
+// nextListPageQuery determines if another page of list results exists and advances query parameters.
+// nextListPageQuery determines if another page of list results exists and advances query parameters.
+// nextListPageQuery determines if another page of list results exists and advances query parameters.
+// nextListPageQuery determines if another page of list results exists and advances query parameters.
+// nextListPageQuery determines if another page of list results exists and advances query parameters.
+// nextListPageQuery determines if another page of list results exists and advances query parameters.
+// nextListPageQuery determines if another page of list results exists and advances query parameters.
 func (r *genericResource) nextListPageQuery(jv any, base url.Values, seen map[string]bool) (url.Values, bool) {
 	root, ok := jv.(map[string]any)
 	if !ok {
@@ -96,6 +126,16 @@ func (r *genericResource) nextListPageQuery(jv any, base url.Values, seen map[st
 	return next, true
 }
 
+// cloneURLValues creates a shallow clone of url.Values.
+// cloneURLValues creates a shallow clone of url.Values.
+// cloneURLValues creates a shallow clone of url.Values.
+// cloneURLValues creates a shallow clone of url.Values.
+// cloneURLValues creates a shallow clone of url.Values.
+// cloneURLValues creates a shallow clone of url.Values.
+// cloneURLValues creates a shallow clone of url.Values.
+// cloneURLValues creates a shallow clone of url.Values.
+// cloneURLValues creates a shallow clone of url.Values.
+// cloneURLValues creates a shallow clone of url.Values.
 func cloneURLValues(v url.Values) url.Values {
 	if v == nil {
 		return url.Values{}

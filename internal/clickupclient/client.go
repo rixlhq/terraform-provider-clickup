@@ -19,6 +19,7 @@ type APIError struct {
 	Body       string
 }
 
+// Error formats the APIError including status code and parsed body details.
 func (e *APIError) Error() string {
 	formatted := formatErrorBody(e.Body)
 	if formatted != "" {
@@ -45,6 +46,7 @@ type fieldError struct {
 	Err     string `json:"err"`
 }
 
+// extractPrimaryMessage returns the primary human-readable error message from rawAPIError.
 func extractPrimaryMessage(raw *rawAPIError) string {
 	if raw.Message != "" {
 		return raw.Message
@@ -55,6 +57,7 @@ func extractPrimaryMessage(raw *rawAPIError) string {
 	return raw.Error
 }
 
+// extractFieldError formats a single field-level error into a descriptive message.
 func extractFieldError(fe fieldError) string {
 	f := fe.Field
 	if f == "" {
@@ -83,6 +86,7 @@ func extractFieldError(fe fieldError) string {
 	}
 }
 
+// extractDetailParts unmarshals and formats any nested or field-level validation errors.
 func extractDetailParts(errorsRaw json.RawMessage) []string {
 	if len(errorsRaw) == 0 {
 		return nil
@@ -107,6 +111,7 @@ func extractDetailParts(errorsRaw json.RawMessage) []string {
 	return nil
 }
 
+// formatErrorBody parses a raw JSON error response and returns a formatted error summary.
 func formatErrorBody(body string) string {
 	trimmed := strings.TrimSpace(body)
 	if !strings.HasPrefix(trimmed, "{") {
@@ -221,6 +226,7 @@ func (c *Client) Delete(ctx context.Context, path string, query ...url.Values) (
 	return c.do(ctx, http.MethodDelete, path, q, nil)
 }
 
+// do executes an HTTP request with authentication and standard ClickUp headers.
 func (c *Client) do(ctx context.Context, method, path string, query url.Values, body []byte) ([]byte, error) {
 	u, err := url.Parse(c.baseURL + path)
 	if err != nil {

@@ -34,11 +34,13 @@ type ClickUpProviderModel struct {
 	V3BaseURL types.String `tfsdk:"v3_base_url"`
 }
 
+// Metadata sets the provider type name and version.
 func (p *ClickUpProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
 	resp.TypeName = "clickup"
 	resp.Version = p.version
 }
 
+// Schema defines the provider configuration schema.
 func (p *ClickUpProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Terraform provider for managing ClickUp infrastructure via the ClickUp Public APIs (V2 and V3). Automate workspaces, spaces, folders, lists, tasks, goals, webhooks, chat channels, time entries, and permissions under Terraform Plugin Framework protocol version 6.",
@@ -60,6 +62,7 @@ func (p *ClickUpProvider) Schema(ctx context.Context, req provider.SchemaRequest
 	}
 }
 
+// Configure initializes ClickUp V2 and V3 clients from configuration and environment variables.
 func (p *ClickUpProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
 	var data ClickUpProviderModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -87,6 +90,7 @@ func (p *ClickUpProvider) Configure(ctx context.Context, req provider.ConfigureR
 	resp.ResourceData = pd
 }
 
+// applyEnvOverrides populates missing configuration values from environment variables.
 func applyEnvOverrides(data ClickUpProviderModel) ClickUpProviderModel {
 	data.APIToken = envOrString(data.APIToken, "CLICKUP_API_TOKEN")
 	data.BaseURL = envOrString(data.BaseURL, "CLICKUP_BASE_URL")
@@ -94,6 +98,7 @@ func applyEnvOverrides(data ClickUpProviderModel) ClickUpProviderModel {
 	return data
 }
 
+// envOrString returns the environment variable value if the Terraform string is null or empty.
 func envOrString(v types.String, env string) types.String {
 	if !v.IsNull() && !v.IsUnknown() && v.ValueString() != "" {
 		return v
@@ -104,6 +109,7 @@ func envOrString(v types.String, env string) types.String {
 	return v
 }
 
+// Resources returns all resource factory functions supported by this provider.
 func (p *ClickUpProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return append(resourceFactories,
 		newFolderResource,
@@ -135,6 +141,7 @@ func (p *ClickUpProvider) Resources(ctx context.Context) []func() resource.Resou
 	)
 }
 
+// DataSources returns all data source factory functions supported by this provider.
 func (p *ClickUpProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return append(dataSourceFactories, append(manualDataSourceFactories,
 		newAuditLogsDataSource,

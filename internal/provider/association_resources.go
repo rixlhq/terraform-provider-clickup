@@ -15,6 +15,7 @@ import (
 
 // --- task_dependency ---
 // POST/DELETE /v2/task/{task_id}/dependency
+// newTaskDependencyResource returns an association resource for task dependencies.
 func newTaskDependencyResource() resource.Resource {
 	return &associationResource{
 		name:              "task_dependency",
@@ -26,6 +27,7 @@ func newTaskDependencyResource() resource.Resource {
 	}
 }
 
+// taskDependencySchema returns the schema for the clickup_task_dependency resource.
 func taskDependencySchema(_ context.Context) schema.Schema {
 	return schema.Schema{
 		MarkdownDescription: "Manages a dependency between two ClickUp tasks. Use `depends_on_id` to make this task depend on another, or `dependency_of` to mark this task as a dependency of another.",
@@ -55,6 +57,7 @@ func taskDependencySchema(_ context.Context) schema.Schema {
 
 // --- task_link ---
 // POST/DELETE /v2/task/{task_id}/link/{links_to}
+// newTaskLinkResource returns an association resource for linking tasks.
 func newTaskLinkResource() resource.Resource {
 	return &associationResource{
 		name:       "task_link",
@@ -64,6 +67,7 @@ func newTaskLinkResource() resource.Resource {
 	}
 }
 
+// taskLinkSchema returns the schema for the clickup_task_link resource.
 func taskLinkSchema(_ context.Context) schema.Schema {
 	return schema.Schema{
 		MarkdownDescription: "Links two ClickUp tasks together.",
@@ -76,6 +80,7 @@ func taskLinkSchema(_ context.Context) schema.Schema {
 
 // --- task_tag ---
 // POST/DELETE /v2/task/{task_id}/tag/{tag_name}
+// newTaskTagResource returns an association resource for assigning tags to tasks.
 func newTaskTagResource() resource.Resource {
 	return &associationResource{
 		name:       "task_tag",
@@ -85,6 +90,7 @@ func newTaskTagResource() resource.Resource {
 	}
 }
 
+// taskTagSchema returns the schema for the clickup_task_tag resource.
 func taskTagSchema(_ context.Context) schema.Schema {
 	return schema.Schema{
 		MarkdownDescription: "Adds a tag to a ClickUp task.",
@@ -97,6 +103,7 @@ func taskTagSchema(_ context.Context) schema.Schema {
 
 // --- task_custom_field ---
 // POST/DELETE /v2/task/{task_id}/field/{field_id}
+// newTaskCustomFieldResource returns an association resource for setting custom fields on tasks.
 func newTaskCustomFieldResource() resource.Resource {
 	return &associationResource{
 		name:       "task_custom_field",
@@ -107,6 +114,7 @@ func newTaskCustomFieldResource() resource.Resource {
 	}
 }
 
+// taskCustomFieldSchema returns the schema for the clickup_task_custom_field resource.
 func taskCustomFieldSchema(_ context.Context) schema.Schema {
 	return schema.Schema{
 		MarkdownDescription: "Sets a custom field value on a ClickUp task.",
@@ -123,6 +131,7 @@ func taskCustomFieldSchema(_ context.Context) schema.Schema {
 
 // --- task_guest ---
 // POST/DELETE /v2/task/{task_id}/guest/{guest_id}
+// newTaskGuestResource returns an association resource for managing guest access to a task.
 func newTaskGuestResource() resource.Resource {
 	return &associationResource{
 		name:       "task_guest",
@@ -133,6 +142,7 @@ func newTaskGuestResource() resource.Resource {
 	}
 }
 
+// taskGuestSchema returns the schema for the clickup_task_guest resource.
 func taskGuestSchema(_ context.Context) schema.Schema {
 	return schema.Schema{
 		MarkdownDescription: "Grants a guest access to a ClickUp task.",
@@ -152,6 +162,7 @@ func taskGuestSchema(_ context.Context) schema.Schema {
 
 // --- folder_guest ---
 // POST/DELETE /v2/folder/{folder_id}/guest/{guest_id}
+// newFolderGuestResource returns an association resource for managing guest access to a folder.
 func newFolderGuestResource() resource.Resource {
 	return &associationResource{
 		name:       "folder_guest",
@@ -162,6 +173,7 @@ func newFolderGuestResource() resource.Resource {
 	}
 }
 
+// folderGuestSchema returns the schema for the clickup_folder_guest resource.
 func folderGuestSchema(_ context.Context) schema.Schema {
 	return schema.Schema{
 		MarkdownDescription: "Grants a guest access to a ClickUp folder.",
@@ -181,6 +193,7 @@ func folderGuestSchema(_ context.Context) schema.Schema {
 
 // --- list_guest ---
 // POST/DELETE /v2/list/{list_id}/guest/{guest_id}
+// newListGuestResource returns an association resource for managing guest access to a list.
 func newListGuestResource() resource.Resource {
 	return &associationResource{
 		name:       "list_guest",
@@ -191,6 +204,7 @@ func newListGuestResource() resource.Resource {
 	}
 }
 
+// listGuestSchema returns the schema for the clickup_list_guest resource.
 func listGuestSchema(_ context.Context) schema.Schema {
 	return schema.Schema{
 		MarkdownDescription: "Grants a guest access to a ClickUp list.",
@@ -210,6 +224,7 @@ func listGuestSchema(_ context.Context) schema.Schema {
 
 // --- list_task ---
 // POST/DELETE /v2/list/{list_id}/task/{task_id}
+// newListTaskResource returns an association resource for associating tasks with lists.
 func newListTaskResource() resource.Resource {
 	return &associationResource{
 		name:       "list_task",
@@ -219,6 +234,7 @@ func newListTaskResource() resource.Resource {
 	}
 }
 
+// listTaskSchema returns the schema for the clickup_list_task resource.
 func listTaskSchema(_ context.Context) schema.Schema {
 	return schema.Schema{
 		MarkdownDescription: "Adds a task to a ClickUp list.",
