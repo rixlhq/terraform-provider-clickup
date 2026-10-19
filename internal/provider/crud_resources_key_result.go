@@ -18,6 +18,7 @@ import (
 // POST /v2/goal/{goal_id}/key_result (create)
 // PUT  /v2/key_result/{key_result_id} (update)
 // DELETE /v2/key_result/{key_result_id} (delete)
+// newKeyResultResource returns a resource instance for managing key results.
 func newKeyResultResource() resource.Resource {
 	return &genericResource{
 		name:               "key_result",
@@ -37,6 +38,7 @@ func newKeyResultResource() resource.Resource {
 	}
 }
 
+// keyResultSchema returns the schema for the clickup_key_result resource.
 func keyResultSchema(_ context.Context) schema.Schema {
 	return schema.Schema{
 		MarkdownDescription: "Manages a key result on a ClickUp goal.",
@@ -119,6 +121,7 @@ func keyResultSchema(_ context.Context) schema.Schema {
 // The GET response nests intervals inside data[].intervals[], which the
 // generic list reader cannot traverse. Read returns state as-is; drift
 // is detected on the next plan when the task is refreshed.
+// newTaskTimeResource returns a resource instance for managing tracked task time intervals.
 func newTaskTimeResource() resource.Resource {
 	return &genericResource{
 		name:             "task_time",
@@ -134,6 +137,7 @@ func newTaskTimeResource() resource.Resource {
 	}
 }
 
+// taskTimeSchema returns the schema for the clickup_task_time resource.
 func taskTimeSchema(_ context.Context) schema.Schema {
 	return schema.Schema{
 		MarkdownDescription: "Manages tracked time on a ClickUp task.",

@@ -63,18 +63,54 @@ type genericResource struct {
 	idField string
 }
 
+// Metadata sets the resource type name.
+// Metadata sets the resource type name.
+// Metadata sets the resource type name.
+// Metadata sets the resource type name.
+// Metadata sets the resource type name.
+// Metadata sets the resource type name.
+// Metadata sets the resource type name.
+// Metadata sets the resource type name.
+// Metadata sets the resource type name.
 func (r *genericResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_" + r.name
 }
 
+// schema computes and decorates the resource schema.
+// schema computes and decorates the resource schema.
+// schema computes and decorates the resource schema.
+// schema computes and decorates the resource schema.
+// schema computes and decorates the resource schema.
+// schema computes and decorates the resource schema.
+// schema computes and decorates the resource schema.
+// schema computes and decorates the resource schema.
+// schema computes and decorates the resource schema.
 func (r *genericResource) schema(ctx context.Context) resource_schema.Schema {
 	return r.addMissingPathParamAttributes(r.schemaFunc(ctx))
 }
 
+// Schema exposes the resource schema to Terraform.
+// Schema exposes the resource schema to Terraform.
+// Schema exposes the resource schema to Terraform.
+// Schema exposes the resource schema to Terraform.
+// Schema exposes the resource schema to Terraform.
+// Schema exposes the resource schema to Terraform.
+// Schema exposes the resource schema to Terraform.
+// Schema exposes the resource schema to Terraform.
+// Schema exposes the resource schema to Terraform.
 func (r *genericResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = r.schema(ctx)
 }
 
+// Configure sets the ClickUp client on the generic resource.
+// Configure sets the ClickUp client on the generic resource.
+// Configure sets the ClickUp client on the generic resource.
+// Configure sets the ClickUp client on the generic resource.
+// Configure sets the ClickUp client on the generic resource.
+// Configure sets the ClickUp client on the generic resource.
+// Configure sets the ClickUp client on the generic resource.
+// Configure sets the ClickUp client on the generic resource.
+// Configure sets the ClickUp client on the generic resource.
 func (r *genericResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -87,6 +123,15 @@ func (r *genericResource) Configure(_ context.Context, req resource.ConfigureReq
 	r.client = pd.ClickUp
 }
 
+// Create creates a generic resource in ClickUp via POST.
+// Create creates a generic resource in ClickUp via POST.
+// Create creates a generic resource in ClickUp via POST.
+// Create creates a generic resource in ClickUp via POST.
+// Create creates a generic resource in ClickUp via POST.
+// Create creates a generic resource in ClickUp via POST.
+// Create creates a generic resource in ClickUp via POST.
+// Create creates a generic resource in ClickUp via POST.
+// Create creates a generic resource in ClickUp via POST.
 func (r *genericResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	if r.client == nil {
 		resp.Diagnostics.AddError("Missing ClickUp Client", "Configure the provider with api_token or CLICKUP_API_TOKEN to use this resource.")
@@ -145,6 +190,15 @@ func (r *genericResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 }
 
+// Read refreshes the generic resource state from ClickUp.
+// Read refreshes the generic resource state from ClickUp.
+// Read refreshes the generic resource state from ClickUp.
+// Read refreshes the generic resource state from ClickUp.
+// Read refreshes the generic resource state from ClickUp.
+// Read refreshes the generic resource state from ClickUp.
+// Read refreshes the generic resource state from ClickUp.
+// Read refreshes the generic resource state from ClickUp.
+// Read refreshes the generic resource state from ClickUp.
 func (r *genericResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	if r.client == nil {
 		resp.Diagnostics.AddError("Missing ClickUp Client", "Configure the provider with api_token or CLICKUP_API_TOKEN to use this resource.")

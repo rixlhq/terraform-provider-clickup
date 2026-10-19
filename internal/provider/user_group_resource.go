@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
+// newUserGroupResource returns a resource instance for managing user groups.
 func newUserGroupResource() resource.Resource {
 	return &genericResource{
 		name:             "user_group",
@@ -37,6 +38,7 @@ func newUserGroupResource() resource.Resource {
 	}
 }
 
+// userGroupSchema returns the schema for the clickup_user_group resource.
 func userGroupSchema(_ context.Context) schema.Schema {
 	return schema.Schema{
 		Attributes: map[string]schema.Attribute{

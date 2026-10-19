@@ -38,6 +38,7 @@ func mergeTfValues(base, latest tftypes.Value) (tftypes.Value, error) {
 	return latest, nil
 }
 
+// mergeTfObjects recursively merges two Terraform Object values attribute by attribute.
 func mergeTfObjects(t tftypes.Object, base, latest tftypes.Value) (tftypes.Value, error) {
 	baseObj, err := asObject(base)
 	if err != nil {
@@ -63,6 +64,7 @@ func mergeTfObjects(t tftypes.Object, base, latest tftypes.Value) (tftypes.Value
 	return tftypes.NewValue(t, merged), nil
 }
 
+// allElementsNull reports whether every element in a Terraform collection value is null.
 func allElementsNull(v tftypes.Value) bool {
 	var elems []tftypes.Value
 	if err := v.As(&elems); err != nil {

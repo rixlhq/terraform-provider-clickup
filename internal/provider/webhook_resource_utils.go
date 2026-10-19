@@ -11,6 +11,7 @@ import (
 	"github.com/rixlhq/terraform-provider-clickup/internal/provider/clickupcommon"
 )
 
+// extractWebhookID parses a raw API response to extract the webhook ID string.
 func extractWebhookID(raw []byte) (string, error) {
 	jv, err := clickupcommon.DecodeJSONResponse(raw)
 	if err != nil {
@@ -37,6 +38,7 @@ func extractWebhookID(raw []byte) (string, error) {
 	return "", errors.New("create webhook response did not contain an id")
 }
 
+// stringOrNull converts an arbitrary response value into a Terraform String.
 func stringOrNull(v any) types.String {
 	switch x := v.(type) {
 	case string:
@@ -48,6 +50,7 @@ func stringOrNull(v any) types.String {
 	}
 }
 
+// int64OrNull converts an arbitrary response value into a Terraform Int64.
 func int64OrNull(v any) types.Int64 {
 	switch x := v.(type) {
 	case json.Number:
@@ -70,6 +73,7 @@ func int64OrNull(v any) types.Int64 {
 	return types.Int64Null()
 }
 
+// listValueFromStrings converts a slice of interface elements into a Terraform string list.
 func listValueFromStrings(ctx context.Context, raw []any) types.List {
 	if len(raw) == 0 {
 		return types.ListNull(types.StringType)

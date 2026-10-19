@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 )
 
+// newViewCommentResource returns a resource instance for managing view comments.
 func newViewCommentResource() resource.Resource {
 	return &genericResource{
 		name:             "view_comment",
@@ -29,6 +30,7 @@ func newViewCommentResource() resource.Resource {
 	}
 }
 
+// viewCommentSchema returns the schema for the clickup_view_comment resource.
 func viewCommentSchema(_ context.Context) schema.Schema {
 	return schema.Schema{
 		Attributes: map[string]schema.Attribute{

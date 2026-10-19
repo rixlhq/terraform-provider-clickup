@@ -13,6 +13,7 @@ import (
 	"github.com/rixlhq/terraform-provider-clickup/internal/clickupv3"
 )
 
+// Create creates a new chat channel in the specified ClickUp workspace via the V3 API.
 func (r *chatChannelResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	if r.client == nil {
 		resp.Diagnostics.AddError("Missing ClickUp V3 Client", "Configure the provider with api_token to use this resource.")
@@ -67,6 +68,7 @@ func (r *chatChannelResource) Create(ctx context.Context, req resource.CreateReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
+// Read refreshes the chat channel state from the ClickUp V3 API.
 func (r *chatChannelResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	if r.client == nil {
 		resp.Diagnostics.AddError("Missing ClickUp V3 Client", "Configure the provider with api_token to use this resource.")
@@ -109,6 +111,7 @@ func (r *chatChannelResource) Read(ctx context.Context, req resource.ReadRequest
 	}
 }
 
+// Update updates an existing chat channel in ClickUp via the V3 API.
 func (r *chatChannelResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	if r.client == nil {
 		resp.Diagnostics.AddError("Missing ClickUp V3 Client", "Configure the provider with api_token to use this resource.")
@@ -167,6 +170,7 @@ func (r *chatChannelResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 }
 
+// Delete removes a chat channel from ClickUp via the V3 API.
 func (r *chatChannelResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	if r.client == nil {
 		resp.Diagnostics.AddError("Missing ClickUp V3 Client", "Configure the provider with api_token to use this resource.")
@@ -204,6 +208,7 @@ func (r *chatChannelResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 }
 
+// ImportState imports an existing chat channel using workspace_id:channel_id format.
 func (r *chatChannelResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	// Import format: workspace_id:channel_id
 	parts := strings.SplitN(req.ID, ":", 2)

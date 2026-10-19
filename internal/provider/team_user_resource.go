@@ -34,14 +34,17 @@ type teamUserModel struct {
 	CustomRoleID types.Int64  `tfsdk:"custom_role_id"`
 }
 
+// Metadata sets the resource type name for clickup_team_user.
 func (r *teamUserResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_team_user"
 }
 
+// Schema sets the schema for clickup_team_user.
 func (r *teamUserResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = teamUserSchema(ctx)
 }
 
+// Configure initializes the ClickUp client for the team user resource.
 func (r *teamUserResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -54,6 +57,7 @@ func (r *teamUserResource) Configure(_ context.Context, req resource.ConfigureRe
 	r.client = pd.ClickUp
 }
 
+// Create invites a user to the ClickUp team.
 func (r *teamUserResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	if r.client == nil {
 		resp.Diagnostics.AddError("Missing ClickUp Client", "Configure the provider with api_token.")
@@ -90,6 +94,7 @@ func (r *teamUserResource) Create(ctx context.Context, req resource.CreateReques
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
+// Read reads the team user state.
 func (r *teamUserResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var state teamUserModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -99,6 +104,7 @@ func (r *teamUserResource) Read(ctx context.Context, req resource.ReadRequest, r
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
+// Update modifies an existing team user in ClickUp.
 func (r *teamUserResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	if r.client == nil {
 		resp.Diagnostics.AddError("Missing ClickUp Client", "Configure the provider with api_token.")
@@ -126,6 +132,7 @@ func (r *teamUserResource) Update(ctx context.Context, req resource.UpdateReques
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
+// Delete removes a user from the ClickUp team.
 func (r *teamUserResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	if r.client == nil {
 		resp.Diagnostics.AddError("Missing ClickUp Client", "Configure the provider with api_token.")

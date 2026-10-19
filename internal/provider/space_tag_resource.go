@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 )
 
+// newSpaceTagResource returns a resource instance for managing space tags.
 func newSpaceTagResource() resource.Resource {
 	return &genericResource{
 		name:             "space_tag",
@@ -31,6 +32,7 @@ func newSpaceTagResource() resource.Resource {
 	}
 }
 
+// spaceTagSchema returns the schema for the clickup_space_tag resource.
 func spaceTagSchema(_ context.Context) schema.Schema {
 	return schema.Schema{
 		Attributes: map[string]schema.Attribute{

@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 )
 
+// newListCommentResource returns a resource instance for managing list comments.
 func newListCommentResource() resource.Resource {
 	return &genericResource{
 		name:             "list_comment",
@@ -32,6 +33,7 @@ func newListCommentResource() resource.Resource {
 	}
 }
 
+// listCommentSchema returns the schema for the clickup_list_comment resource.
 func listCommentSchema(_ context.Context) schema.Schema {
 	return schema.Schema{
 		Attributes: map[string]schema.Attribute{

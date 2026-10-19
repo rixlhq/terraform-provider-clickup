@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
+// tfValueToJSON converts a tftypes.Value into a JSON-encodable Go data structure.
 func tfValueToJSON(ctx context.Context, v tftypes.Value) (any, error) {
 	if v.IsNull() || !v.IsKnown() {
 		return nil, nil
@@ -49,6 +50,7 @@ func tfValueToJSON(ctx context.Context, v tftypes.Value) (any, error) {
 	}
 }
 
+// tfObjectToJSON converts a Terraform Object value into a JSON map.
 func tfObjectToJSON(ctx context.Context, v tftypes.Value) (any, error) {
 	var m map[string]tftypes.Value
 	if err := v.As(&m); err != nil {
@@ -68,6 +70,7 @@ func tfObjectToJSON(ctx context.Context, v tftypes.Value) (any, error) {
 	return out, nil
 }
 
+// tfCollectionToJSON converts a Terraform List, Set, or Tuple value into a JSON slice.
 func tfCollectionToJSON(ctx context.Context, v tftypes.Value) (any, error) {
 	var l []tftypes.Value
 	if err := v.As(&l); err != nil {
@@ -87,6 +90,7 @@ func tfCollectionToJSON(ctx context.Context, v tftypes.Value) (any, error) {
 	return out, nil
 }
 
+// tfMapToJSON converts a Terraform Map value into a JSON map.
 func tfMapToJSON(ctx context.Context, v tftypes.Value) (any, error) {
 	var m map[string]tftypes.Value
 	if err := v.As(&m); err != nil {

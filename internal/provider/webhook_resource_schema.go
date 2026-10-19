@@ -42,14 +42,18 @@ type webhookResourceModel struct {
 	UserId       types.Int64  `tfsdk:"user_id"`
 }
 
+// newWebhookResource returns a new ClickUp webhook resource instance.
 func newWebhookResource() resource.Resource {
 	return &webhookResource{}
 }
 
+// Metadata sets the resource type name for clickup_webhook.
 func (r *webhookResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_webhook"
 }
 
+// Schema defines the schema and attributes for clickup_webhook.
+//
 //nolint:goconst // repeated Terraform attribute names are intentional
 func (r *webhookResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
@@ -130,6 +134,7 @@ func (r *webhookResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 	}
 }
 
+// Configure initializes the ClickUp client for the webhook resource.
 func (r *webhookResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return

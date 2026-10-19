@@ -18,6 +18,7 @@ import (
 // GET  /v2/team/{team_id}/time_entries/{timer_id} (read)
 // PUT  /v2/team/{team_id}/time_entries/{timer_id} (update)
 // DELETE /v2/team/{team_id}/time_entries/{timer_id} (delete)
+// newTimeEntryResource returns a resource instance for managing time entries.
 func newTimeEntryResource() resource.Resource {
 	return &genericResource{
 		name:             "time_entry",
@@ -33,6 +34,7 @@ func newTimeEntryResource() resource.Resource {
 	}
 }
 
+// timeEntrySchema returns the schema for the clickup_time_entry resource.
 func timeEntrySchema(_ context.Context) schema.Schema {
 	return schema.Schema{
 		MarkdownDescription: "Manages a time entry on a ClickUp team.",

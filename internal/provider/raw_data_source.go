@@ -36,6 +36,7 @@ type rawJSONDataSource struct {
 	schema      datasource_schema.Schema
 }
 
+// newRawJSONDataSource returns a factory function for a generic raw JSON data source.
 func newRawJSONDataSource(name, path string, params []string, queryParams ...rawQueryParam) func() datasource.DataSource {
 	return func() datasource.DataSource {
 		return &rawJSONDataSource{
@@ -47,10 +48,13 @@ func newRawJSONDataSource(name, path string, params []string, queryParams ...raw
 	}
 }
 
+// Metadata sets the data source type name.
 func (d *rawJSONDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_" + d.name
 }
 
+// Schema defines the dynamic schema based on path and query parameters.
+// Schema defines the dynamic schema based on path and query parameters.
 func (d *rawJSONDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	attrs := make(map[string]datasource_schema.Attribute, len(d.params)+len(d.queryParams)+1)
 	for _, p := range d.params {
@@ -83,6 +87,7 @@ func (d *rawJSONDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 	resp.Schema = d.schema
 }
 
+// Configure initializes the ClickUp client for the data source.
 func (d *rawJSONDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -95,6 +100,7 @@ func (d *rawJSONDataSource) Configure(_ context.Context, req datasource.Configur
 	d.client = pd.ClickUp
 }
 
+// Read executes a GET request against the ClickUp API and stores the raw JSON in result.
 func (d *rawJSONDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	if d.client == nil {
 		resp.Diagnostics.AddError("Missing ClickUp Client", "Configure the provider with api_token or CLICKUP_API_TOKEN to use this data source.")
@@ -146,6 +152,8 @@ func (d *rawJSONDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	resp.State.Raw = tftypes.NewValue(tfType, state)
 }
 
+// buildPathAndQuery interpolates path parameters and constructs URL query parameters from config.
+// buildPathAndQuery interpolates path parameters and constructs URL query parameters from config.
 func (d *rawJSONDataSource) buildPathAndQuery(v tftypes.Value) (string, url.Values, error) {
 	obj, err := asObject(v)
 	if err != nil {

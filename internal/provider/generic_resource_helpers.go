@@ -13,6 +13,9 @@ import (
 	"github.com/rixlhq/terraform-provider-clickup/internal/provider/clickupcommon"
 )
 
+// idFromValue retrieves the resource identifier string from a Terraform value.
+// idFromValue retrieves the resource identifier string from a Terraform value.
+// idFromValue retrieves the resource identifier string from a Terraform value.
 func (r *genericResource) idFromValue(v tftypes.Value) (string, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	obj, err := asObject(v)
@@ -34,6 +37,9 @@ func (r *genericResource) idFromValue(v tftypes.Value) (string, diag.Diagnostics
 	return s, diags
 }
 
+// idParam returns the path parameter placeholder name for this resource ID.
+// idParam returns the path parameter placeholder name for this resource ID.
+// idParam returns the path parameter placeholder name for this resource ID.
 func (r *genericResource) idParam() string {
 	if r.idField != "" {
 		return r.idField
@@ -46,6 +52,9 @@ func (r *genericResource) idParam() string {
 	return "id"
 }
 
+// buildPath replaces {param} placeholders in template with values from Terraform state.
+// buildPath replaces {param} placeholders in template with values from Terraform state.
+// buildPath replaces {param} placeholders in template with values from Terraform state.
 func (r *genericResource) buildPath(path string, v tftypes.Value) (string, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	obj, err := asObject(v)
@@ -74,6 +83,9 @@ func (r *genericResource) buildPath(path string, v tftypes.Value) (string, diag.
 	return out, diags
 }
 
+// buildBody constructs the JSON request body for creating or updating a generic resource.
+// buildBody constructs the JSON request body for creating or updating a generic resource.
+// buildBody constructs the JSON request body for creating or updating a generic resource.
 func (r *genericResource) buildBody(ctx context.Context, v tftypes.Value, fields []string, defaults map[string]any, transforms map[string]func(any) any) ([]byte, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	j, err := clickupcommon.TfValueToJSON(ctx, v)
@@ -183,6 +195,9 @@ func (r *genericResource) updateBodyValue(_ context.Context, merged, plan tftype
 	return tftypes.NewValue(merged.Type(), vals), nil
 }
 
+// tfType returns the underlying Terraform type for this resource.
+// tfType returns the underlying Terraform type for this resource.
+// tfType returns the underlying Terraform type for this resource.
 func (r *genericResource) tfType(ctx context.Context) tftypes.Type {
 	return r.schema(ctx).Type().TerraformType(ctx)
 }

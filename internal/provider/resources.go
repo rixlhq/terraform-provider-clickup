@@ -25,6 +25,7 @@ var resourceFactories = []func() resource.Resource{
 	newSpaceViewResource,
 }
 
+// newFolderlessListResource returns a resource instance for folderless_list.
 func newFolderlessListResource() resource.Resource {
 	return &genericResource{
 		name:             "folderless_list",
@@ -47,6 +48,7 @@ func newFolderlessListResource() resource.Resource {
 	}
 }
 
+// newGoalResource returns a resource instance for goal.
 func newGoalResource() resource.Resource {
 	return &genericResource{
 		name:             "goal",
@@ -65,6 +67,7 @@ func newGoalResource() resource.Resource {
 	}
 }
 
+// newListResource returns a resource instance for list.
 func newListResource() resource.Resource {
 	return &genericResource{
 		name:             "list",
@@ -87,6 +90,7 @@ func newListResource() resource.Resource {
 	}
 }
 
+// newSpaceResource returns a resource instance for space.
 func newSpaceResource() resource.Resource {
 	return &genericResource{
 		name:             "space",
@@ -101,6 +105,7 @@ func newSpaceResource() resource.Resource {
 	}
 }
 
+// newTaskResource returns a resource instance for task.
 func newTaskResource() resource.Resource {
 	return &genericResource{
 		name:             "task",
@@ -129,6 +134,7 @@ func newTaskResource() resource.Resource {
 	}
 }
 
+// newViewResource returns a resource instance for view.
 func newViewResource() resource.Resource {
 	return &genericResource{
 		name:             "view",
@@ -154,6 +160,7 @@ func newViewResource() resource.Resource {
 	}
 }
 
+// newFolderViewResource returns a resource instance for folder_view.
 func newFolderViewResource() resource.Resource {
 	return &genericResource{
 		name:             "folder_view",
@@ -179,6 +186,7 @@ func newFolderViewResource() resource.Resource {
 	}
 }
 
+// newListViewResource returns a resource instance for list_view.
 func newListViewResource() resource.Resource {
 	return &genericResource{
 		name:             "list_view",
@@ -204,6 +212,7 @@ func newListViewResource() resource.Resource {
 	}
 }
 
+// newSpaceViewResource returns a resource instance for space_view.
 func newSpaceViewResource() resource.Resource {
 	return &genericResource{
 		name:             "space_view",

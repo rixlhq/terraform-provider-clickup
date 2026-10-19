@@ -20,10 +20,12 @@ type chatChannelResource struct {
 	client *clickupv3.Client
 }
 
+// newChatChannelResource returns a new ClickUp chat channel resource instance.
 func newChatChannelResource() resource.Resource {
 	return &chatChannelResource{}
 }
 
+// Metadata sets the resource type name for clickup_chat_channel.
 func (r *chatChannelResource) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = "clickup_chat_channel"
 }
@@ -94,6 +96,7 @@ func (r *chatChannelResource) Schema(_ context.Context, _ resource.SchemaRequest
 	}
 }
 
+// Configure initializes the ClickUp V3 client for the chat channel resource.
 func (r *chatChannelResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -120,6 +123,7 @@ type chatChannelModel struct {
 	Type        types.String   `tfsdk:"type"`
 }
 
+// applyChannelToModel copies OpenAPI chat channel fields into the Terraform model.
 func (r *chatChannelResource) applyChannelToModel(m *chatChannelModel, ch clickupv3.ChatChannel) {
 	m.ChannelID = types.StringValue(ch.ID)
 	m.Name = types.StringValue(ch.Name)
@@ -140,6 +144,7 @@ func (r *chatChannelResource) applyChannelToModel(m *chatChannelModel, ch clicku
 	m.Type = types.StringValue(string(ch.Type))
 }
 
+// stringListValue converts a slice of Terraform strings into a native Go string slice.
 func stringListValue(vals []types.String) []string {
 	if len(vals) == 0 {
 		return nil

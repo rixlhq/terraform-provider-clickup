@@ -12,6 +12,7 @@ import (
 	"github.com/rixlhq/terraform-provider-clickup/internal/provider/clickupcommon"
 )
 
+// buildCreateBody constructs the JSON payload for creating a ClickUp folder.
 func (r *folderResource) buildCreateBody(data folderResourceModel) ([]byte, error) {
 	body := map[string]any{
 		"name": data.Name.ValueString(),
@@ -22,6 +23,7 @@ func (r *folderResource) buildCreateBody(data folderResourceModel) ([]byte, erro
 	return json.Marshal(body)
 }
 
+// buildUpdateBody constructs the JSON payload for updating a ClickUp folder.
 func (r *folderResource) buildUpdateBody(data folderResourceModel) ([]byte, error) {
 	body := map[string]any{
 		"name": data.Name.ValueString(),
@@ -44,6 +46,7 @@ func folderParentID(folder map[string]any) string {
 	return ""
 }
 
+// refresh retrieves the current state of a folder from the ClickUp API.
 func (r *folderResource) refresh(ctx context.Context, data *folderResourceModel) error {
 	path := "/v2/folder/" + url.PathEscape(data.FolderId.ValueString())
 	raw, err := r.client.Get(ctx, path, nil)
@@ -57,6 +60,7 @@ func (r *folderResource) refresh(ctx context.Context, data *folderResourceModel)
 	return r.mapResponse(raw, data)
 }
 
+// mapResponse parses the API response JSON and populates the folder resource model.
 func (r *folderResource) mapResponse(raw []byte, data *folderResourceModel) error {
 	jv, err := clickupcommon.DecodeJSONResponse(raw)
 	if err != nil {
@@ -91,6 +95,7 @@ func (r *folderResource) mapResponse(raw []byte, data *folderResourceModel) erro
 	return nil
 }
 
+// boolOrNull converts an arbitrary response value into a Terraform Bool.
 func boolOrNull(v any) types.Bool {
 	switch x := v.(type) {
 	case bool:
