@@ -109,4 +109,59 @@ func TestClientAPIError(t *testing.T) {
 	if apiErr.Body != "bad request" {
 		t.Fatalf("expected body \"bad request\", got %q", apiErr.Body)
 	}
+	if apiErr.Error() != "clickup API error 400: bad request" {
+		t.Fatalf("unexpected error message: %q", apiErr.Error())
+	}
+}
+
+func TestClientAPIError_StructuredFormatting(t *testing.T) {
+	tests := []struct {
+		name       string
+		statusCode int
+		body       string
+		expected   string
+	}{
+		{
+			name:       "err with ECODE",
+			statusCode: 404,
+			body:       `{"err": "Team not found", "ECODE": "TEAM_001"}`,
+			expected:   "clickup API error 404: Team not found [code: TEAM_001]",
+		},
+		{
+			name:       "message with structured field errors array",
+			statusCode: 400,
+			body:       `{"message": "Validation failed", "errors": [{"field": "name", "message": "is required"}, {"param": "color", "msg": "invalid hex"}]}`,
+			expected:   `clickup API error 400: Validation failed (field "name": is required; field "color": invalid hex)`,
+		},
+		{
+			name:       "message with string errors array",
+			statusCode: 422,
+			body:       `{"message": "Invalid request", "errors": ["missing task_id", "invalid assignee"]}`,
+			expected:   "clickup API error 422: Invalid request (missing task_id; invalid assignee)",
+		},
+		{
+			name:       "error string field",
+			statusCode: 401,
+			body:       `{"error": "Unauthorized token"}`,
+			expected:   "clickup API error 401: Unauthorized token",
+		},
+		{
+			name:       "non-json fallback",
+			statusCode: 502,
+			body:       "Bad Gateway",
+			expected:   "clickup API error 502: Bad Gateway",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			apiErr := &clickupclient.APIError{
+				StatusCode: tt.statusCode,
+				Body:       tt.body,
+			}
+			if got := apiErr.Error(); got != tt.expected {
+				t.Errorf("got %q, want %q", got, tt.expected)
+			}
+		})
+	}
 }
