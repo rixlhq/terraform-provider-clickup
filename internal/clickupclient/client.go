@@ -34,6 +34,7 @@ type rawAPIError struct {
 	Message string          `json:"message"`
 	ECODE   string          `json:"ECODE"`
 	Code    string          `json:"code"`
+	TraceID string          `json:"trace_id"`
 	Errors  json.RawMessage `json:"errors"`
 }
 
@@ -153,6 +154,18 @@ func formatErrorBody(body string) string {
 		} else {
 			b.WriteString("[code: ")
 			b.WriteString(code)
+			b.WriteString("]")
+		}
+	}
+
+	if raw.TraceID != "" {
+		if b.Len() > 0 {
+			b.WriteString(" [trace_id: ")
+			b.WriteString(raw.TraceID)
+			b.WriteString("]")
+		} else {
+			b.WriteString("[trace_id: ")
+			b.WriteString(raw.TraceID)
 			b.WriteString("]")
 		}
 	}

@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -73,9 +72,6 @@ func keyResultSchema(_ context.Context) schema.Schema {
 			"owners": schema.ListAttribute{
 				ElementType: types.Int64Type,
 				Required:    true,
-				Validators: []validator.List{
-					listvalidator.SizeAtLeast(1),
-				},
 			},
 			"steps_start": schema.Int64Attribute{
 				Required: true,
