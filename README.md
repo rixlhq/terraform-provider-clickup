@@ -2,7 +2,8 @@
 
 # Terraform Provider for ClickUp
 
-[![Terraform Registry](https://img.shields.io/badge/Terraform%20Registry-v0.1-623CE4?logo=terraform&logoColor=white)](https://registry.terraform.io/providers/rixlhq/clickup/latest)
+[![Terraform Registry](https://img.shields.io/badge/Terraform%20Registry-rixlhq%2Fclickup-623CE4?logo=terraform&logoColor=white)](https://registry.terraform.io/providers/rixlhq/clickup/latest)
+[![Release](https://img.shields.io/github/v/release/rixlhq/terraform-provider-clickup?sort=semver)](https://github.com/rixlhq/terraform-provider-clickup/releases)
 [![CI](https://github.com/rixlhq/terraform-provider-clickup/actions/workflows/ci.yml/badge.svg)](https://github.com/rixlhq/terraform-provider-clickup/actions/workflows/ci.yml)
 [![Go Version](https://img.shields.io/badge/Go-1.26+-00ADD8?logo=go&logoColor=white)](https://go.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -48,7 +49,7 @@ terraform {
   required_providers {
     clickup = {
       source  = "rixlhq/clickup"
-      version = "~> 0.1"
+      version = "~> 1.0"
     }
   }
 }
