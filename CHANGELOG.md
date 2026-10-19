@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.0.0](https://github.com/rixlhq/terraform-provider-clickup/compare/v0.3.2...v1.0.0) (2026-10-19)
+
+
+### ⚠ BREAKING CHANGES
+
+* Strict plan-time schema validation and updated error formatting. Provider now targets v1.0.0.
+
+### Features
+
+* bump provider to v1.0.0 with plan-time validation and modern architecture ([eeae180](https://github.com/rixlhq/terraform-provider-clickup/commit/eeae180997c8c676767335349c5e9917d44bc48d))
+* **client:** add automatic exponential backoff and rate-limit retry handling ([c1629d3](https://github.com/rixlhq/terraform-provider-clickup/commit/c1629d3e737f19c49d051fb2f98b319cdad72d31))
+* **provider:** add plan-time attribute and relation validation ([6f7b052](https://github.com/rixlhq/terraform-provider-clickup/commit/6f7b052926ebd6379f0cd27120280dce825ba66d))
+* **provider:** add resource import support across folder, space, task, list, and team resources ([53dcad5](https://github.com/rixlhq/terraform-provider-clickup/commit/53dcad58ec7190c1379c00df4e1d48dbff65b8af))
+
+
+### Bug Fixes
+
+* **client,provider:** include trace_id in API errors and permit unassigned key results ([77f899f](https://github.com/rixlhq/terraform-provider-clickup/commit/77f899f25a477467494b8055c6b42d51f683769f))
+* **client:** format structured API errors with nested field details ([dae519e](https://github.com/rixlhq/terraform-provider-clickup/commit/dae519efb4a40737831539c5d311a56d3e5ed636))
+* **provider:** allow replace tag action and protocol-free webhook endpoints ([0acc2d7](https://github.com/rixlhq/terraform-provider-clickup/commit/0acc2d710f899f5f7315c182001444c7d91ff681))
+
 ## [0.3.2](https://github.com/rixlhq/terraform-provider-clickup/compare/v0.3.1...v0.3.2) (2026-09-13)
 
 
