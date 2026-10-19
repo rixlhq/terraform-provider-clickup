@@ -151,6 +151,12 @@ func TestClientAPIError_StructuredFormatting(t *testing.T) {
 			body:       "Bad Gateway",
 			expected:   "clickup API error 502: Bad Gateway",
 		},
+		{
+			name:       "message with trace_id",
+			statusCode: 500,
+			body:       `{"message": "Internal error", "trace_id": "req_12345"}`,
+			expected:   "clickup API error 500: Internal error [trace_id: req_12345]",
+		},
 	}
 
 	for _, tt := range tests {
