@@ -8,7 +8,7 @@ lefthook = "2.2.2"
 "go:github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs" = "v0.25.0"
 "go:github.com/hashicorp/terraform-plugin-codegen-openapi/cmd/tfplugingen-openapi" = "v0.3.0"
 "go:github.com/hashicorp/terraform-plugin-codegen-framework/cmd/tfplugingen-framework" = "v0.4.1"
-"go:github.com/ogen-go/ogen/cmd/ogen" = "v1.24.0"
+"go:github.com/ogen-go/ogen/cmd/ogen" = "v1.25.0"
 
 [hooks]
 postinstall = "lefthook install"
